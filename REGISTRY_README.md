@@ -224,9 +224,9 @@ Available actions:
 
 ---
 
-## 7. Tree-Shakable Modular Imports
+## 7. Decoupled Module Architecture & Deep Imports
 
-Valua is architected for modularity. You can import individual primitives without loading the root table:
+Valua's dependency graph is architecturally decomposed: every primitive lives in its own file with minimal core dependencies and zero global side effects. You can import individual primitives directly without loading the root module table, making codebases clean and keeping future module bundling and dead-code elimination straightforward:
 
 ```lua
 local string = require("valua.schemas.string")

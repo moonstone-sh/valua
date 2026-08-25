@@ -1,6 +1,6 @@
 # Valua — Valibot-Inspired Modular Schema Validation for Lua
 
-**Valua** is a modular, zero-dependency schema validation library for Lua inspired by [Valibot](https://valibot.dev). It brings composable validation actions, structured error reporting, extreme tree-shaking readiness, Standard Schema v1 conformance, and an optional LuaLS static type compiler to Lua.
+**Valua** is a modular, zero-dependency schema validation library for Lua inspired by [Valibot](https://valibot.dev). It brings composable validation actions, structured error reporting, a strictly decomposed module graph, Standard Schema v1 conformance, and an optional LuaLS static type compiler to Lua.
 
 ---
 
@@ -45,7 +45,7 @@ end
 - **Valibot-Style Functional Composition:** Modular schemas and actions (`v.pipe(v.string(), v.min_length(3))`).
 - **Standard Schema v1 Interoperability:** Every schema implements the `~standard` validation contract (`validate(value, options?) -> { value } | { issues }`).
 - **One Primitive Per File Architecture:** Extreme modularity — deep imports (`require("valua.schemas.string")`) work without loading the root namespace.
-- **Tree-Shaker Ready:** Static imports, no runtime registration, zero global side effects.
+- **Decoupled Architecture:** One primitive per file, clean dependency boundaries, zero runtime registration, and zero global side effects.
 - **Structured Error Pathing:** Issues retain structured paths (`{ { key = "profile" } }`) formatted on demand.
 - **LuaLS Type Compiler Bridge:** Includes an analyzer and LuaCATS emitter (`tooling/luals/`) that transforms schema expressions into static IDE annotations without mutating source files on disk.
 
@@ -142,9 +142,9 @@ flowchart TD
 
 ---
 
-## 6. Deep Imports (Tree-Shaking Friendly)
+## 6. Decoupled Module Architecture & Deep Imports
 
-You can import primitives individually without touching the `valua` root module:
+Valua's dependency graph is architecturally decomposed: every primitive lives in its own file with minimal core dependencies and zero global side effects. You can import individual primitives directly without loading the root module table, making codebases clean and keeping future module bundling and dead-code elimination straightforward:
 
 ```lua
 local string = require("valua.schemas.string")
