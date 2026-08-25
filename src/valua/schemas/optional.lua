@@ -1,5 +1,7 @@
+local standard_schema = require("valua.core.standard_schema")
+
 local function optional(wrapped_schema)
-    return {
+    return standard_schema.attach({
         kind = "schema",
         type = "optional",
         expects = (wrapped_schema.expects or "schema") .. " | nil",
@@ -13,7 +15,7 @@ local function optional(wrapped_schema)
 
             return wrapped_schema._run(dataset, config)
         end,
-    }
+    })
 end
 
 return optional

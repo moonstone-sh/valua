@@ -1,8 +1,9 @@
 local issue = require("valua.core.issue")
 local dataset_lib = require("valua.core.dataset")
+local standard_schema = require("valua.core.standard_schema")
 
 local function nil_(custom_message)
-    return {
+    return standard_schema.attach({
         kind = "schema",
         type = "nil",
         expects = "nil",
@@ -23,7 +24,7 @@ local function nil_(custom_message)
             end
             return dataset
         end,
-    }
+    })
 end
 
 return nil_

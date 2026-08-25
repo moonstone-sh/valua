@@ -5,6 +5,7 @@ local optional_generic = require("tests.tooling.luals.capabilities.optional_gene
 local alias_generic = require("tests.tooling.luals.capabilities.alias_generic_spec")
 local nested_object = require("tests.tooling.luals.capabilities.nested_object_spec")
 local discriminated_union = require("tests.tooling.luals.capabilities.discriminated_union_spec")
+local standard_schema = require("tests.tooling.luals.capabilities.standard_schema_capability_spec")
 
 describe("LuaLS Generic Capabilities Compatibility Suite", function()
     it("generic class field substitution (Case A)", function()
@@ -33,5 +34,9 @@ describe("LuaLS Generic Capabilities Compatibility Suite", function()
 
     it("discriminated union control-flow narrowing", function()
         assert_true(discriminated_union.run())
+    end)
+
+    it("Standard Schema v1 ~standard generic propagation", function()
+        assert_true(standard_schema.run())
     end)
 end)

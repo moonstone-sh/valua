@@ -1,8 +1,9 @@
 local issue = require("valua.core.issue")
 local dataset_lib = require("valua.core.dataset")
+local standard_schema = require("valua.core.standard_schema")
 
 local function union(schemas, custom_message)
-    return {
+    return standard_schema.attach({
         kind = "schema",
         type = "union",
         expects = "union",
@@ -39,7 +40,7 @@ local function union(schemas, custom_message)
 
             return dataset
         end,
-    }
+    })
 end
 
 return union

@@ -1,5 +1,6 @@
 local issue = require("valua.core.issue")
 local dataset_lib = require("valua.core.dataset")
+local standard_schema = require("valua.core.standard_schema")
 
 local function picklist(options, custom_message)
     local allowed = {}
@@ -10,7 +11,7 @@ local function picklist(options, custom_message)
     end
     local expected_str = table.concat(options_str_buf, " | ")
 
-    return {
+    return standard_schema.attach({
         kind = "schema",
         type = "picklist",
         expects = expected_str,
@@ -32,7 +33,7 @@ local function picklist(options, custom_message)
             end
             return dataset
         end,
-    }
+    })
 end
 
 return picklist

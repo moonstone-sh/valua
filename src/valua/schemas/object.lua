@@ -1,12 +1,13 @@
 local issue = require("valua.core.issue")
 local dataset_lib = require("valua.core.dataset")
 local path_lib = require("valua.core.path")
+local standard_schema = require("valua.core.standard_schema")
 
 ---@param entries table<string, valua.BaseSchema<any, any>>
 ---@param custom_message? string
 ---@return valua.BaseSchema<table, table>
 local function object(entries, custom_message)
-    return {
+    return standard_schema.attach({
         kind = "schema",
         type = "object",
         expects = "object",
@@ -63,7 +64,7 @@ local function object(entries, custom_message)
 
             return dataset
         end,
-    }
+    })
 end
 
 return object

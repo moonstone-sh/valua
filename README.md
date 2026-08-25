@@ -1,6 +1,6 @@
 # Valua — Valibot-Inspired Modular Schema Validation for Lua
 
-**Valua** is a modular, zero-dependency schema validation library for Lua inspired by [Valibot](https://valibot.dev). It brings composable validation actions, structured error reporting, extreme tree-shaking readiness, and an optional LuaLS static type compiler to Lua.
+**Valua** is a modular, zero-dependency schema validation library for Lua inspired by [Valibot](https://valibot.dev). It brings composable validation actions, structured error reporting, extreme tree-shaking readiness, Standard Schema v1 conformance, and an optional LuaLS static type compiler to Lua.
 
 ---
 
@@ -33,7 +33,7 @@ if result.success then
     print("Welcome, " .. result.output.name)
 else
     for _, issue in ipairs(result.issues) do
-        print("Error at " .. issue.path .. ": " .. issue.message)
+        print("Error at " .. issue.path_str .. ": " .. issue.message)
     end
 end
 ```
@@ -43,19 +43,41 @@ end
 ## 2. Key Features
 
 - **Valibot-Style Functional Composition:** Modular schemas and actions (`v.pipe(v.string(), v.min_length(3))`).
+- **Standard Schema v1 Interoperability:** Every schema implements the `~standard` validation contract (`validate(value, options?) -> { value } | { issues }`).
 - **One Primitive Per File Architecture:** Extreme modularity — deep imports (`require("valua.schemas.string")`) work without loading the root namespace.
 - **Tree-Shaker Ready:** Static imports, no runtime registration, zero global side effects.
-- **Structured Error Pathing:** Issues retain structured paths (`{ { kind = "object", key = "profile" } }`) formatted on demand.
+- **Structured Error Pathing:** Issues retain structured paths (`{ { key = "profile" } }`) formatted on demand.
 - **LuaLS Type Compiler Bridge:** Includes an analyzer and LuaCATS emitter (`tooling/luals/`) that transforms schema expressions into static IDE annotations without mutating source files on disk.
 
 ---
 
-## 3. Architecture Overview
+## 3. Standard Schema v1 Interoperability
+
+Valua implements the [Standard Schema v1](https://standardschema.dev) interface for ecosystem-wide validator interoperability:
+
+```lua
+local standard = UserSchema["~standard"]
+assert(standard.version == 1)
+assert(standard.vendor == "valua")
+
+local res = standard.validate(payload)
+if res.issues then
+    for _, issue in ipairs(res.issues) do
+        print(issue.message)
+    end
+else
+    print("User authenticated:", res.value.name)
+end
+```
+
+---
+
+## 4. Architecture Overview
 
 ```mermaid
 flowchart TD
     User["User Schema Code"] --> API["Valua API / Direct Require"]
-    API --> Core["Validation Runtime (schemas, actions, dataset, issues)"]
+    API --> Core["Validation Runtime (schemas, actions, dataset, issues, standard_schema)"]
     User -. Optional Tooling .-> Lexer["Lexer & Parser"]
     Lexer --> IR["Semantic Type IR"]
     IR --> Emitter["LuaCATS Emitter"]
@@ -64,7 +86,7 @@ flowchart TD
 
 ---
 
-## 4. Deep Imports (Tree-Shaking Friendly)
+## 5. Deep Imports (Tree-Shaking Friendly)
 
 You can import primitives individually without touching the `valua` root module:
 
@@ -80,7 +102,7 @@ local value = parse(schema, "hello")
 
 ---
 
-## 5. Available Primitives
+## 6. Available Primitives
 
 ### Schemas
 `any`, `unknown`, `never`, `nil_`, `boolean`, `number`, `integer`, `string`, `literal`, `picklist`, `array`, `tuple`, `object`, `loose_object`, `strict_object`, `record`, `union`, `optional`, `lazy`, `custom`.
@@ -93,7 +115,7 @@ local value = parse(schema, "hello")
 
 ---
 
-## 6. Testing & Benchmarking
+## 7. Testing & Benchmarking
 
 Run tests:
 ```bash

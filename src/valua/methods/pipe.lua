@@ -1,9 +1,11 @@
+local standard_schema = require("valua.core.standard_schema")
+
 ---@generic I, O
 ---@param schema valua.BaseSchema<I, O>
 ---@return valua.BaseSchema<I, O>
 local function pipe(schema, ...)
     local stages = { ... }
-    return {
+    return standard_schema.attach({
         kind = "schema",
         type = "pipe",
         expects = schema.expects or "pipeline",
@@ -24,7 +26,7 @@ local function pipe(schema, ...)
 
             return dataset
         end,
-    }
+    })
 end
 
 return pipe

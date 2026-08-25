@@ -1,8 +1,9 @@
 local issue = require("valua.core.issue")
 local dataset_lib = require("valua.core.dataset")
+local standard_schema = require("valua.core.standard_schema")
 
 local function literal(expected_value, custom_message)
-    return {
+    return standard_schema.attach({
         kind = "schema",
         type = "literal",
         expects = tostring(expected_value),
@@ -24,7 +25,7 @@ local function literal(expected_value, custom_message)
             end
             return dataset
         end,
-    }
+    })
 end
 
 return literal

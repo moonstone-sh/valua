@@ -1,6 +1,6 @@
 # Valua
 
-Valua is a deterministic schema declaration, runtime validation, and static type inference library for Lua and Moonstone projects. It combines composable runtime validation with full LuaLS language server autocompletion and discriminated union narrowing.
+Valua is a deterministic schema declaration, runtime validation, and static type inference library for Lua and Moonstone projects. It combines composable runtime validation with full LuaLS language server autocompletion, discriminated union narrowing, and Standard Schema v1 interoperability.
 
 ---
 
@@ -89,7 +89,34 @@ flowchart TD
 
 ---
 
-## 3. Core Capabilities
+## 3. Standard Schema v1 Interoperability
+
+Valua implements the **Standard Schema v1 validation contract** for Lua (`https://standardschema.dev`). Every Valua schema exposes the `~standard` property with a synchronous `validate(value, options?)` method:
+
+```lua
+local v = require("valua")
+
+local User = v.object({
+  name = v.string(),
+})
+
+-- Interoperability boundary
+local result = User["~standard"].validate(payload)
+
+if result.issues then
+  for _, issue in ipairs(result.issues) do
+    print(issue.message)
+  end
+else
+  print("Validated user:", result.value.name)
+end
+```
+
+> **Note:** Ordinary Valua users will usually prefer `v.safe_parse(...)` for richer boolean discrimination and formatted error paths. The `~standard` interface is primarily designed for third-party routers, form libraries, and frameworks that accept arbitrary Standard Schema-compliant validators without hard-depending on Valua.
+
+---
+
+## 4. Core Capabilities
 
 ### Primitive Schemas
 - `v.string()`, `v.number()`, `v.integer()`, `v.boolean()`
@@ -128,7 +155,7 @@ Available actions:
 
 ---
 
-## 4. Methods
+## 5. Methods
 
 | Method | Signature | Description |
 | :--- | :--- | :--- |
@@ -139,7 +166,7 @@ Available actions:
 
 ---
 
-## 5. Tree-Shakable Modular Imports
+## 6. Tree-Shakable Modular Imports
 
 Valua is architected for modularity. You can import individual primitives without loading the root table:
 

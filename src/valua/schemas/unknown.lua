@@ -1,5 +1,7 @@
+local standard_schema = require("valua.core.standard_schema")
+
 local function unknown()
-    return {
+    return standard_schema.attach({
         kind = "schema",
         type = "unknown",
         expects = "unknown",
@@ -7,7 +9,7 @@ local function unknown()
             dataset.typed = true
             return dataset
         end,
-    }
+    })
 end
 
 return unknown

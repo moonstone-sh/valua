@@ -1,9 +1,10 @@
 local issue = require("valua.core.issue")
 local dataset_lib = require("valua.core.dataset")
 local path_lib = require("valua.core.path")
+local standard_schema = require("valua.core.standard_schema")
 
 local function array(item_schema, custom_message)
-    return {
+    return standard_schema.attach({
         kind = "schema",
         type = "array",
         expects = "array",
@@ -59,7 +60,7 @@ local function array(item_schema, custom_message)
 
             return dataset
         end,
-    }
+    })
 end
 
 return array
