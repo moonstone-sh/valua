@@ -3,24 +3,12 @@ local config_lib = require("valua.core.config")
 
 local standard_schema = {}
 
-local function convert_issues(valua_issues)
-    local standard_issues = {}
-    for i, iss in ipairs(valua_issues) do
-        local std_issue = {
-            message = iss.message,
-        }
-        if iss.path and #iss.path > 0 then
-            local path_segments = {}
-            for j, p in ipairs(iss.path) do
-                path_segments[j] = { key = p.key }
-            end
-            std_issue.path = path_segments
-        end
-        standard_issues[i] = std_issue
-    end
-    return standard_issues
-end
-
+--- Creates a Standard Schema v1 compliant interface table for a given schema.
+--- Native Valua issues and path items are a structural superset of Standard Schema v1
+--- (each issue has `message` and `path` with `{ key = ... }` segments), allowing
+--- zero-copy reuse of the issue array directly on failure without extra allocations.
+---@param schema valua.BaseSchema<any, any>
+---@return valua.StandardSchemaV1<any, any>
 function standard_schema.create(schema)
     return {
         version = 1,
@@ -33,7 +21,7 @@ function standard_schema.create(schema)
 
             if ds.issues and #ds.issues > 0 then
                 return {
-                    issues = convert_issues(ds.issues),
+                    issues = ds.issues,
                 }
             end
 
@@ -44,6 +32,10 @@ function standard_schema.create(schema)
     }
 end
 
+--- Attaches the ~standard property to a schema object.
+---@generic S : valua.BaseSchema<any, any>
+---@param schema S
+---@return S
 function standard_schema.attach(schema)
     schema["~standard"] = standard_schema.create(schema)
     return schema
