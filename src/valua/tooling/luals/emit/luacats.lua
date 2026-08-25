@@ -61,7 +61,9 @@ function luacats.type_to_string(t, ctx, class_emitter)
         end
         return table.concat(buf, "|")
     elseif k == "Object" then
-        if class_emitter and ctx then
+        if t.class_name then
+            return t.class_name
+        elseif class_emitter and ctx then
             return class_emitter(t, ctx)
         else
             return "table"
@@ -90,7 +92,8 @@ function luacats.emit_declaration(symbol_name, schema_type, context_or_module)
     local emitted_classes = {}
 
     local function emit_object_class(obj_type, current_ctx)
-        local class_name = current_ctx:full_name()
+        local class_name = obj_type.class_name or current_ctx:full_name()
+        obj_type.class_name = class_name
         if emitted_classes[class_name] then
             return class_name
         end

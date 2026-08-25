@@ -55,6 +55,8 @@ local specs = {
     "tests.tooling.tooling_spec",
     "tests.tooling.capabilities_spec",
     "tests.tooling.naming_spec",
+    "tests.tooling.enhanced_parser_spec",
+    "tests.tooling.lsp_integration_spec",
     "tests.modularity_spec",
     "tests.standard_schema.presence_spec",
     "tests.standard_schema.version_spec",

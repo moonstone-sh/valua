@@ -1,15 +1,10 @@
 local dataset_lib = require("valua.core.dataset")
 local config_lib = require("valua.core.config")
 
----@class valua.SafeParseSuccess<O>
----@field success true
----@field output O
-
----@class valua.SafeParseError
----@field success false
----@field issues valua.Issue[]
-
----@alias valua.SafeParseResult<O> valua.SafeParseSuccess<O> | valua.SafeParseError
+---@class valua.SafeParseResult<O>
+---@field success boolean
+---@field output? O
+---@field issues? valua.Issue[]
 
 ---@generic I, O
 ---@param schema valua.BaseSchema<I, O>

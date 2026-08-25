@@ -105,24 +105,48 @@ function parser.parse_tokens(tokens)
             local name = t0.text
             idx = idx + 1
 
+            local namespace = nil
+            local func_name = name
+
             -- Check namespace call: v.func(...)
             if match_text(0, ".") then
                 idx = idx + 1
                 local t_func = peek(0)
                 if t_func and t_func.type == "identifier" then
-                    local func_name = t_func.text
+                    namespace = name
+                    func_name = t_func.text
                     idx = idx + 1
-
-                    if match_text(0, "(") then
-                        local args = parse_args_list()
-                        return {
-                            type = "call",
-                            namespace = name,
-                            func = func_name,
-                            args = args,
-                        }
-                    end
+                else
+                    return { type = "ref", name = name }
                 end
+            end
+
+            -- Function call variants: (args), {table}, "string"
+            if match_text(0, "(") then
+                local args = parse_args_list()
+                return {
+                    type = "call",
+                    namespace = namespace,
+                    func = func_name,
+                    args = args,
+                }
+            elseif match_text(0, "{") then
+                local tbl = parse_table_literal()
+                return {
+                    type = "call",
+                    namespace = namespace,
+                    func = func_name,
+                    args = { tbl },
+                }
+            elseif peek(0) and peek(0).type == "string" then
+                local str_tok = peek(0)
+                idx = idx + 1
+                return {
+                    type = "call",
+                    namespace = namespace,
+                    func = func_name,
+                    args = { { type = "literal", value = str_tok.value } },
+                }
             end
 
             -- Plain variable reference

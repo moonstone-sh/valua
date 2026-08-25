@@ -5,15 +5,10 @@ local test = {}
 
 function test.run()
     local code = [[
----@class valua.SafeParseSuccess<O>
----@field success true
----@field output O
-
----@class valua.SafeParseError
----@field success false
----@field issues table[]
-
----@alias valua.SafeParseResult<O> valua.SafeParseSuccess<O> | valua.SafeParseError
+---@class valua.SafeParseResult<O>
+---@field success boolean
+---@field output? O
+---@field issues? table[]
 
 ---@generic I, O
 ---@param schema valua.BaseSchema<I, O>

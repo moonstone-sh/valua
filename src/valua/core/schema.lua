@@ -5,15 +5,9 @@
 ---@field message string
 ---@field path? valua.StandardSchemaPathSegment[]
 
----@class valua.StandardSchemaSuccess<O>
----@field value O
----@field issues nil
-
----@class valua.StandardSchemaFailure
----@field value nil
----@field issues valua.StandardSchemaIssue[]
-
----@alias valua.StandardSchemaResult<O> valua.StandardSchemaSuccess<O> | valua.StandardSchemaFailure
+---@class valua.StandardSchemaResult<O>
+---@field value? O
+---@field issues? valua.StandardSchemaIssue[]
 
 ---@class valua.StandardSchemaOptions
 ---@field libraryOptions? valua.Config
