@@ -54,7 +54,65 @@ end
 
 ---
 
-## 2. Architecture & LuaLS Type Inference
+## 2. LuaLS IDE Plugin (Zero-Config Type Inference)
+
+Valua includes a first-class language server plugin for [LuaLS](https://github.com/LuaLS/lua-language-server). The plugin analyzes schema definitions in memory and synthesizes exact LuaCATS `---@class` structures and `valua.BaseSchema<I, O>` annotations without modifying your source code on disk.
+
+### Option 1: Project-level `.luarc.json` (Recommended)
+
+When Valua is installed via Moonstone (`moon add moonstone/valua`), configure `.luarc.json` in your project root:
+
+```json
+{
+  "runtime": {
+    "version": "Lua 5.4",
+    "plugin": ".moonstone/env/share/lua/5.4/valua/tooling/luals/plugin.lua"
+  },
+  "workspace": {
+    "library": [
+      ".moonstone/env/share/lua/5.4"
+    ]
+  }
+}
+```
+
+### Option 2: Neovim (`nvim-lspconfig`)
+
+In your Neovim LSP setup:
+
+```lua
+require("lspconfig").lua_ls.setup({
+  settings = {
+    Lua = {
+      runtime = {
+        version = "Lua 5.4",
+        plugin = vim.fn.getcwd() .. "/.moonstone/env/share/lua/5.4/valua/tooling/luals/plugin.lua",
+      },
+      workspace = {
+        library = {
+          vim.fn.getcwd() .. "/.moonstone/env/share/lua/5.4",
+        },
+      },
+    },
+  },
+})
+```
+
+### Option 3: VS Code (`.vscode/settings.json`)
+
+```json
+{
+  "Lua.runtime.version": "Lua 5.4",
+  "Lua.runtime.plugin": ".moonstone/env/share/lua/5.4/valua/tooling/luals/plugin.lua",
+  "Lua.workspace.library": [
+    "${workspaceFolder}/.moonstone/env/share/lua/5.4"
+  ]
+}
+```
+
+---
+
+## 3. Architecture & LuaLS Type Inference
 
 Valua bridges runtime validation with the Lua Language Server (LuaLS) without requiring call-site type assertions.
 
@@ -89,7 +147,7 @@ flowchart TD
 
 ---
 
-## 3. Standard Schema v1 Interoperability
+## 4. Standard Schema v1 Interoperability
 
 Valua implements the **Standard Schema v1 validation contract** for Lua (`https://standardschema.dev`). Every Valua schema exposes the `~standard` property with a synchronous `validate(value, options?)` method:
 
@@ -116,7 +174,7 @@ end
 
 ---
 
-## 4. Core Capabilities
+## 5. Core Capabilities
 
 ### Primitive Schemas
 - `v.string()`, `v.number()`, `v.integer()`, `v.boolean()`
@@ -155,7 +213,7 @@ Available actions:
 
 ---
 
-## 5. Methods
+## 6. Methods
 
 | Method | Signature | Description |
 | :--- | :--- | :--- |
@@ -166,7 +224,7 @@ Available actions:
 
 ---
 
-## 6. Tree-Shakable Modular Imports
+## 7. Tree-Shakable Modular Imports
 
 Valua is architected for modularity. You can import individual primitives without loading the root table:
 

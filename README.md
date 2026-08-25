@@ -51,7 +51,63 @@ end
 
 ---
 
-## 3. Standard Schema v1 Interoperability
+## 3. LuaLS IDE Plugin (Zero-Config Type Inference)
+
+Valua includes a language server plugin for [LuaLS](https://github.com/LuaLS/lua-language-server). It analyzes schema declarations in memory and synthesizes precise LuaCATS `---@class` structures and `valua.BaseSchema<I, O>` annotations without modifying files on disk.
+
+### Option 1: Project-level `.luarc.json` (Recommended)
+
+When using Moonstone (`moon add moonstone/valua`), add to your project's `.luarc.json`:
+
+```json
+{
+  "runtime": {
+    "version": "Lua 5.4",
+    "plugin": ".moonstone/env/share/lua/5.4/valua/tooling/luals/plugin.lua"
+  },
+  "workspace": {
+    "library": [
+      ".moonstone/env/share/lua/5.4"
+    ]
+  }
+}
+```
+
+### Option 2: Neovim (`nvim-lspconfig`)
+
+```lua
+require("lspconfig").lua_ls.setup({
+  settings = {
+    Lua = {
+      runtime = {
+        version = "Lua 5.4",
+        plugin = vim.fn.getcwd() .. "/.moonstone/env/share/lua/5.4/valua/tooling/luals/plugin.lua",
+      },
+      workspace = {
+        library = {
+          vim.fn.getcwd() .. "/.moonstone/env/share/lua/5.4",
+        },
+      },
+    },
+  },
+})
+```
+
+### Option 3: VS Code (`.vscode/settings.json`)
+
+```json
+{
+  "Lua.runtime.version": "Lua 5.4",
+  "Lua.runtime.plugin": ".moonstone/env/share/lua/5.4/valua/tooling/luals/plugin.lua",
+  "Lua.workspace.library": [
+    "${workspaceFolder}/.moonstone/env/share/lua/5.4"
+  ]
+}
+```
+
+---
+
+## 4. Standard Schema v1 Interoperability
 
 Valua implements the [Standard Schema v1](https://standardschema.dev) interface for ecosystem-wide validator interoperability:
 
@@ -72,7 +128,7 @@ end
 
 ---
 
-## 4. Architecture Overview
+## 5. Architecture Overview
 
 ```mermaid
 flowchart TD
@@ -86,7 +142,7 @@ flowchart TD
 
 ---
 
-## 5. Deep Imports (Tree-Shaking Friendly)
+## 6. Deep Imports (Tree-Shaking Friendly)
 
 You can import primitives individually without touching the `valua` root module:
 
@@ -102,7 +158,7 @@ local value = parse(schema, "hello")
 
 ---
 
-## 6. Available Primitives
+## 7. Available Primitives
 
 ### Schemas
 `any`, `unknown`, `never`, `nil_`, `boolean`, `number`, `integer`, `string`, `literal`, `picklist`, `array`, `tuple`, `object`, `loose_object`, `strict_object`, `record`, `union`, `optional`, `lazy`, `custom`.
@@ -115,7 +171,7 @@ local value = parse(schema, "hello")
 
 ---
 
-## 7. Testing & Benchmarking
+## 8. Testing & Benchmarking
 
 Run tests:
 ```bash
