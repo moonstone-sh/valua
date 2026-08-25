@@ -1,9 +1,8 @@
 -- Ensure package.path self-resolution when running inside LuaLS engine
 local current_file = debug.getinfo(1, "S").source:sub(2)
-local base_dir = current_file:match("^@?(.*[/\\]src[/\\])")
+local base_dir = current_file:match("^@?(.*[/\\])valua[/\\]tooling[/\\]")
 if not base_dir then
-    base_dir = current_file:match("^@?(.*[/\\])tooling[/\\]")
-    if base_dir then base_dir = base_dir .. "src/" end
+    base_dir = current_file:match("^@?(.*[/\\]src[/\\])")
 end
 
 if base_dir then
