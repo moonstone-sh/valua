@@ -62,7 +62,7 @@ jobs:
           asset="$(find dist/registry/valua -maxdepth 1 -type f -name '*.tar.zst' -print -quit)"
           test -n "$asset"
           gh release view "$RELEASE_TAG" >/dev/null 2>&1 || gh release create "$RELEASE_TAG" --title "Valua $RELEASE_TAG" --generate-notes
-          gh release upload "$RELEASE_TAG" "$asset"
+          gh release upload "$RELEASE_TAG" "$asset" --clobber
           echo "MOONSTONE_ARTIFACT_URL=https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/$(basename "$asset")" >> "$GITHUB_ENV"
       - name: Publish registry artifact
         env:
