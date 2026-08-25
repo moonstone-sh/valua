@@ -8,6 +8,7 @@ return ballad.partiture(function(p)
 	local source_artifact = moonstone.registry.source_package(project, {
 		name = project.registry_name or "moonstone/valua",
 		kind = "lib",
+		readme = "REGISTRY_README.md",
 		include = {
 			"src/**",
 			"docs/**",
