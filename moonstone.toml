@@ -1,0 +1,21 @@
+manifest_version = 2
+
+[package]
+name = "valua"
+version = "0.1.0"
+kind = "lib"
+description = "A new Moonstone Lua project"
+
+[interpreter]
+name = "lua"
+version = "5.4"
+abi = "5.4"
+
+[[dependencies]]
+name = "moonstone/ballad"
+constraint = "path:../ballad"
+registry = "path"
+role = "tool"
+
+[scripts]
+package = "moon exec ballad -- play partiture.lua"

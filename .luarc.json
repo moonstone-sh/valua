@@ -1,0 +1,22 @@
+{
+  "runtime": {
+    "plugin": "src/valua/tooling/luals/plugin.lua"
+  },
+  "workspace": {
+    "library": [
+      "src",
+      ".moonstone/env/share/lua/5.4"
+    ],
+    "checkThirdParty": false,
+    "useGitIgnore": false,
+    "ignoreDir": [
+      ".moonstone/env/bin",
+      ".moonstone/env/lib",
+      ".moonstone/env/include",
+      ".moonstone/env/libexec",
+      "zig-cache",
+      "zig-out",
+      ".git"
+    ]
+  }
+}

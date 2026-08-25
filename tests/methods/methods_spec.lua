@@ -1,0 +1,31 @@
+local v = require("valua")
+
+describe("Public Methods (parse, safe_parse, is, pipe)", function()
+    it("parse returns value or throws ValidationError", function()
+        local s = v.string()
+        assert_equal(v.parse(s, "test"), "test")
+
+        local ok, err = pcall(function() v.parse(s, 123) end)
+        assert_false(ok)
+        assert_true(err.is_validation_error == true)
+        assert_true(#err.issues > 0)
+    end)
+
+    it("safe_parse returns success boolean table without throwing", function()
+        local s = v.string()
+        local ok_res = v.safe_parse(s, "valid")
+        assert_true(ok_res.success)
+        assert_equal(ok_res.output, "valid")
+
+        local err_res = v.safe_parse(s, 123)
+        assert_false(err_res.success)
+        assert_true(#err_res.issues > 0)
+        assert_equal(err_res.issues[1].type, "string")
+    end)
+
+    it("is returns boolean predicate", function()
+        local s = v.integer()
+        assert_true(v.is(s, 42))
+        assert_false(v.is(s, "42"))
+    end)
+end)
