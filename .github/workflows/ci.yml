@@ -19,11 +19,6 @@ jobs:
           repository: moonstone-sh/moonstone
           ref: main
           path: .ci/moonstone
-      - uses: actions/checkout@v4
-        with:
-          repository: moonstone-sh/ballad
-          path: .ci/ballad
-          fetch-depth: 0
       - uses: mlugg/setup-zig@v2
         with:
           version: 0.16.0
@@ -38,11 +33,6 @@ jobs:
           echo "$GITHUB_WORKSPACE/.ci/moonstone/zig-out/bin" >> "$GITHUB_PATH"
       - name: Synchronize project
         run: moon sync
-      - name: Prepare locked Ballad integration checkout
-        run: |
-          ln -s "$GITHUB_WORKSPACE/.ci/ballad" "$GITHUB_WORKSPACE/../ballad"
-          cd .ci/ballad
-          moon sync
       - name: Run test suite
         run: moon run test
       - name: Export release candidate with Ballad
