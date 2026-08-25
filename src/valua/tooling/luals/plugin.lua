@@ -17,19 +17,30 @@ local parser = require("valua.tooling.luals.analyzer.parser")
 local resolver = require("valua.tooling.luals.analyzer.resolver")
 local infer = require("valua.tooling.luals.analyzer.infer")
 local luacats = require("valua.tooling.luals.emit.luacats")
+local naming = require("valua.tooling.luals.emit.naming")
 
 local function analyze_source(code, uri)
     local tokens = lexer.tokenize(code)
     local decls = parser.parse_tokens(tokens)
     local env = resolver.create()
     local results = {}
+    local module_name = naming.normalize_uri_to_module(uri)
+    local var_counts = {}
 
-    for i, decl in ipairs(decls) do
+    for _, decl in ipairs(decls) do
         local st = infer.evaluate_expr(decl.expr, env)
         env.set(decl.var_name, st)
 
-        local stable_id = (uri or "file") .. "_" .. decl.var_name .. "_" .. tostring(i)
-        local cats_str = luacats.emit_declaration(decl.var_name, st, stable_id)
+        local count = (var_counts[decl.var_name] or 0) + 1
+        var_counts[decl.var_name] = count
+
+        local root_name = decl.var_name
+        if count > 1 then
+            root_name = root_name .. "_" .. tostring(count)
+        end
+
+        local ctx = naming.create_context(module_name, root_name)
+        local cats_str = luacats.emit_declaration(root_name, st, ctx)
 
         if cats_str and cats_str ~= "" then
             table.insert(results, {

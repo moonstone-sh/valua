@@ -1,0 +1,80 @@
+name: Publish Valua
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Existing v* tag to publish after a publish-only failure.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish Valua registry artifact
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref }}
+      - uses: actions/checkout@v4
+        with:
+          repository: moonstone-sh/moonstone
+          ref: main
+          path: .ci/moonstone
+      - uses: actions/checkout@v4
+        with:
+          repository: moonstone-sh/ballad
+          path: .ci/ballad
+          fetch-depth: 0
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+      - name: Install release tooling
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y b3sum file jq libsqlite3-dev lsof pkg-config zstd
+      - name: Build Moonstone CLI
+        working-directory: .ci/moonstone
+        run: |
+          zig build
+          echo "$GITHUB_WORKSPACE/.ci/moonstone/zig-out/bin" >> "$GITHUB_PATH"
+      - name: Synchronize project
+        run: moon sync
+      - name: Prepare locked Ballad integration checkout
+        run: |
+          ln -s "$GITHUB_WORKSPACE/.ci/ballad" "$GITHUB_WORKSPACE/../ballad"
+          cd .ci/ballad
+          moon sync
+      - name: Export tagged project
+        run: moon exec ballad play partiture.lua
+      - name: Verify tag version
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+        run: test "${RELEASE_TAG#v}" = "$(sed -n 's/^version = "\(.*\)"$/\1/p' moonstone.toml | head -1)"
+      - name: Upload immutable GitHub release artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}
+        run: |
+          set -eu
+          asset="$(find dist/registry/valua -maxdepth 1 -type f -name '*.tar.zst' -print -quit)"
+          test -n "$asset"
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || gh release create "$RELEASE_TAG" --title "Valua $RELEASE_TAG" --generate-notes
+          gh release upload "$RELEASE_TAG" "$asset"
+          echo "MOONSTONE_ARTIFACT_URL=https://github.com/${GITHUB_REPOSITORY}/releases/download/${RELEASE_TAG}/$(basename "$asset")" >> "$GITHUB_ENV"
+      - name: Publish registry artifact
+        env:
+          MOONSTONE_TOKEN: ${{ secrets.MOONSTONE_TOKEN }}
+          MOONSTONE_ARTIFACT_URL: ${{ env.MOONSTONE_ARTIFACT_URL }}
+        run: |
+          test -n "$MOONSTONE_TOKEN"
+          dist/registry/valua/publish.sh
+      - name: Verify published package is resolvable
+        run: .ci/ballad/scripts/wait-for-publication.sh dist/registry/valua/package.toml

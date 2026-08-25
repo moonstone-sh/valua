@@ -1,10 +1,8 @@
+local naming = require("valua.tooling.luals.emit.naming")
+
 local luacats = {}
 
-local function sanitize_name(str)
-    return str:gsub("[^%w_]", "_")
-end
-
-function luacats.type_to_string(t, class_emitter)
+function luacats.type_to_string(t, ctx, class_emitter)
     if not t then return "unknown" end
     local k = t.kind
 
@@ -31,29 +29,40 @@ function luacats.type_to_string(t, class_emitter)
         end
         return table.concat(buf, "|")
     elseif k == "Optional" then
-        return luacats.type_to_string(t.item, class_emitter) .. "|nil"
+        return luacats.type_to_string(t.item, ctx, class_emitter) .. "|nil"
     elseif k == "Array" then
         if t.item and t.item.kind == "Picklist" then
             return "string[]"
         end
-        local inner = luacats.type_to_string(t.item, class_emitter)
+        local child_ctx = ctx and ctx:child("item")
+        local inner = luacats.type_to_string(t.item, child_ctx, class_emitter)
         if inner:find("|") then
             return "any[]"
         end
         return inner .. "[]"
+    elseif k == "Tuple" then
+        local buf = {}
+        for i, it in ipairs(t.items or {}) do
+            local child_ctx = ctx and ctx:child("item_" .. tostring(i))
+            table.insert(buf, luacats.type_to_string(it, child_ctx, class_emitter))
+        end
+        return "any[]"
     elseif k == "Record" then
-        local k_str = luacats.type_to_string(t.key, class_emitter)
-        local v_str = luacats.type_to_string(t.value, class_emitter)
+        local child_k = ctx and ctx:child("key")
+        local child_v = ctx and ctx:child("value")
+        local k_str = luacats.type_to_string(t.key, child_k, class_emitter)
+        local v_str = luacats.type_to_string(t.value, child_v, class_emitter)
         return "table<" .. k_str .. ", " .. v_str .. ">"
     elseif k == "Union" then
         local buf = {}
-        for _, ut in ipairs(t.types) do
-            table.insert(buf, luacats.type_to_string(ut, class_emitter))
+        for i, ut in ipairs(t.types or {}) do
+            local child_ctx = ctx and ctx:child("variant_" .. tostring(i))
+            table.insert(buf, luacats.type_to_string(ut, child_ctx, class_emitter))
         end
         return table.concat(buf, "|")
     elseif k == "Object" then
-        if class_emitter then
-            return class_emitter(t)
+        if class_emitter and ctx then
+            return class_emitter(t, ctx)
         else
             return "table"
         end
@@ -62,41 +71,60 @@ function luacats.type_to_string(t, class_emitter)
     return "unknown"
 end
 
-function luacats.emit_declaration(symbol_name, schema_type, stable_id)
+function luacats.emit_declaration(symbol_name, schema_type, context_or_module)
     if not (schema_type and schema_type.output and schema_type.output.kind ~= "Unknown") then
         return ""
     end
 
+    local ctx
+    if type(context_or_module) == "string" then
+        ctx = naming.create_context(context_or_module, symbol_name)
+    elseif type(context_or_module) == "table" and context_or_module.full_name then
+        ctx = context_or_module
+    else
+        ctx = naming.create_context("module", symbol_name)
+    end
+
     local lines = {}
     local classes = {}
-    local class_counter = 0
+    local emitted_classes = {}
 
-    local base_id = sanitize_name(stable_id or symbol_name)
-
-    local function emit_object_class(obj_type)
-        if obj_type.generated_class_name then
-            return obj_type.generated_class_name
+    local function emit_object_class(obj_type, current_ctx)
+        local class_name = current_ctx:full_name()
+        if emitted_classes[class_name] then
+            return class_name
         end
-        class_counter = class_counter + 1
-        local class_name = "__valua_" .. base_id .. "_Class_" .. tostring(class_counter)
-        obj_type.generated_class_name = class_name
-        local fields = obj_type.fields or {}
+        emitted_classes[class_name] = true
 
-        local class_buf = { "---@class " .. class_name }
-        for f_name, f_type in pairs(fields) do
+        local fields = obj_type.fields or {}
+        -- Deterministic sorted keys for stable byte-identical output
+        local sorted_keys = {}
+        for k in pairs(fields) do
+            table.insert(sorted_keys, k)
+        end
+        table.sort(sorted_keys)
+
+        local field_lines = {}
+        for _, f_name in ipairs(sorted_keys) do
+            local f_type = fields[f_name]
             local is_opt = (f_type.kind == "Optional")
             local actual_type = is_opt and f_type.item or f_type
-            local type_str = luacats.type_to_string(actual_type, emit_object_class)
+            local field_ctx = current_ctx:child(f_name)
+            local type_str = luacats.type_to_string(actual_type, field_ctx, emit_object_class)
             local field_name_str = f_name .. (is_opt and "?" or "")
-            table.insert(class_buf, "---@field " .. field_name_str .. " " .. type_str)
+            table.insert(field_lines, "---@field " .. field_name_str .. " " .. type_str)
         end
-        table.insert(class_buf, "local " .. class_name .. " = {}")
+
+        local class_buf = { "---@class " .. class_name }
+        for _, fl in ipairs(field_lines) do
+            table.insert(class_buf, fl)
+        end
 
         table.insert(classes, table.concat(class_buf, "\n"))
         return class_name
     end
 
-    local out_type_str = luacats.type_to_string(schema_type.output, emit_object_class)
+    local out_type_str = luacats.type_to_string(schema_type.output, ctx, emit_object_class)
     local in_type_str = out_type_str
 
     local schema_anno = "---@type valua.BaseSchema<" .. in_type_str .. ", " .. out_type_str .. ">"

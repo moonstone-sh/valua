@@ -53,6 +53,7 @@ local specs = {
     "tests.integration.integration_spec",
     "tests.tooling.tooling_spec",
     "tests.tooling.capabilities_spec",
+    "tests.tooling.naming_spec",
     "tests.modularity_spec",
 }
 

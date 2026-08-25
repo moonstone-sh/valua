@@ -4,7 +4,7 @@ manifest_version = 2
 name = "valua"
 version = "0.1.0"
 kind = "lib"
-description = "A new Moonstone Lua project"
+description = "Deterministic schema declaration, runtime validation, and static type inference for Lua"
 
 [interpreter]
 name = "lua"
@@ -18,4 +18,5 @@ registry = "path"
 role = "tool"
 
 [scripts]
+test = "lua tests/runner.lua"
 package = "moon exec ballad -- play partiture.lua"

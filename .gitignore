@@ -1,5 +1,7 @@
-# Moonstone
+# Moonstone & Ballad
 .moonstone/
+.ballad/
+dist/
 
 # Zig
 zig-cache/
