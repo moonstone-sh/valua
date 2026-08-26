@@ -1,6 +1,6 @@
 # Valua — Valibot-Inspired Modular Schema Validation for Lua
 
-**Valua** is a modular, zero-dependency schema validation library for Lua inspired by [Valibot](https://valibot.dev). It brings composable validation actions, structured error reporting, a strictly decomposed module graph, Standard Schema v1 conformance, and an optional LuaLS static type compiler to Lua.
+**Valua** is a modular, zero-dependency schema validation library for Lua inspired by [Valibot](https://valibot.dev). It brings composable validation actions, structured error reporting, a strictly decomposed module graph, Standard Schema v1 conformance, and an in-memory LuaLS static type compiler to Lua.
 
 ---
 
@@ -47,13 +47,15 @@ end
 - **One Primitive Per File Architecture:** Extreme modularity — deep imports (`require("valua.schemas.string")`) work without loading the root namespace.
 - **Decoupled Architecture:** One primitive per file, clean dependency boundaries, zero runtime registration, and zero global side effects.
 - **Structured Error Pathing:** Issues retain structured paths (`{ { key = "profile" } }`) formatted on demand.
-- **LuaLS Type Compiler Bridge:** Includes an analyzer and LuaCATS emitter (`tooling/luals/`) that transforms schema expressions into static IDE annotations without mutating source files on disk.
+- **LuaLS Automatic Type Inference:** Includes an in-memory AST analyzer and LuaCATS emitter (`tooling/luals/`) that synthesizes IDE class annotations and generic schema bindings without mutating files on disk.
 
 ---
 
-## 3. LuaLS IDE Plugin (Zero-Config Type Inference)
+## 3. LuaLS IDE Plugin — Automatic Type Inference
 
 Valua includes a language server plugin for [LuaLS](https://github.com/LuaLS/lua-language-server). It analyzes schema declarations in memory and synthesizes precise LuaCATS `---@class` structures and `valua.BaseSchema<I, O>` annotations without modifying files on disk.
+
+> **Note on Environment Paths:** The examples below reference a Moonstone project using Lua 5.4 (`.moonstone/env/share/lua/5.4/`). If your project uses Lua 5.1, LuaJIT, or Lua 5.3, replace `5.4` with your active interpreter version.
 
 ### Option 1: Project-level `.luarc.json` (Recommended)
 
@@ -128,17 +130,33 @@ end
 
 ---
 
-## 5. Architecture Overview
+## 5. Architecture & Type System
+
+Valua operates across four cleanly separated layers: runtime validation, the LuaLS type inference engine, Standard Schema interoperability, and deep modular exports.
 
 ```mermaid
 flowchart TD
-    User["User Schema Code"] --> API["Valua API / Direct Require"]
-    API --> Core["Validation Runtime (schemas, actions, dataset, issues, standard_schema)"]
-    User -. Optional Tooling .-> Lexer["Lexer & Parser"]
-    Lexer --> IR["Semantic Type IR"]
-    IR --> Emitter["LuaCATS Emitter"]
-    Emitter --> LuaLS["LuaLS Buffer Annotations"]
+    schema["v.object({ ... })"] --> analyzer["Valua Schema AST Analyzer"]
+    analyzer --> type_ir["Type Intermediate Representation (IR)"]
+    type_ir --> cats["LuaCATS Synthetic Classes"]
+    cats --> base_schema["BaseSchema<Input, Output>"]
+    base_schema --> luals["LuaLS Generic Propagation"]
+    luals --> parse["v.parse() → Output"]
+    luals --> safe_parse["v.safe_parse() → SafeParseResult<Output>"]
+
+    classDef source fill:#1d4ed8,stroke:#93c5fd,color:#eff6ff
+    classDef plan fill:#7c3aed,stroke:#c4b5fd,color:#f5f3ff
+    classDef product fill:#047857,stroke:#6ee7b7,color:#ecfdf5
+    classDef effect fill:#b45309,stroke:#fcd34d,color:#fffbeb
+    class schema source
+    class analyzer,type_ir plan
+    class cats,base_schema product
+    class luals,parse,safe_parse effect
 ```
+
+- **Runtime Execution:** Pure Lua tables and closures with zero global state.
+- **Type Propagation:** `v.safe_parse` produces `valua.SafeParseResult<O>` (`{ success = boolean, output? = O, issues? = Issue[] }`) for seamless autocomplete and hover across all scopes, while `v.parse` returns non-nullable `O` directly.
+- **Zero-Copy Standard Schema:** Native issues already satisfy the `{ message, path = { { key } } }` contract, enabling zero-copy standard validation results.
 
 ---
 
@@ -163,8 +181,12 @@ local value = parse(schema, "hello")
 ### Schemas
 `any`, `unknown`, `never`, `nil_`, `boolean`, `number`, `integer`, `string`, `literal`, `picklist`, `array`, `tuple`, `object`, `loose_object`, `strict_object`, `record`, `union`, `optional`, `lazy`, `custom`.
 
-### Actions
-`check`, `transform`, `non_empty`, `length`, `min_length`, `max_length`, `min_value`, `max_value`, `multiple_of`, `pattern`, `starts_with`, `ends_with`.
+### Actions & Pipelines
+- `v.non_empty()`, `v.length(n)`, `v.min_length(n)`, `v.max_length(n)`
+- `v.min_value(n)`, `v.max_value(n)`, `v.multiple_of(n)`
+- `v.starts_with(str)`, `v.ends_with(str)`, `v.pattern(lua_pattern)`
+- `v.check(predicate, message)`: Custom validation rule.
+- `v.transform(fn)`: Transforms parsed values into a new output representation (e.g. `v.pipe(v.string(), v.transform(tonumber))` $\rightarrow$ `BaseSchema<string, number>`).
 
 ### Methods
 `pipe`, `parse`, `safe_parse`, `is`.

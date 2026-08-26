@@ -1,6 +1,6 @@
 # Valua
 
-Valua is a deterministic schema declaration, runtime validation, and static type inference library for Lua and Moonstone projects. It combines composable runtime validation with full LuaLS language server autocompletion, discriminated union narrowing, and Standard Schema v1 interoperability.
+Valua is a deterministic schema declaration, runtime validation, and static type inference library for Lua and Moonstone projects. It combines composable runtime validation with full LuaLS language server autocompletion, concrete schema output inference, and Standard Schema v1 interoperability.
 
 ---
 
@@ -54,9 +54,11 @@ end
 
 ---
 
-## 2. LuaLS IDE Plugin (Zero-Config Type Inference)
+## 2. LuaLS IDE Plugin — Automatic Type Inference
 
 Valua includes a first-class language server plugin for [LuaLS](https://github.com/LuaLS/lua-language-server). The plugin analyzes schema definitions in memory and synthesizes exact LuaCATS `---@class` structures and `valua.BaseSchema<I, O>` annotations without modifying your source code on disk.
+
+> **Note on Environment Paths:** The examples below reference a Moonstone project using Lua 5.4 (`.moonstone/env/share/lua/5.4/`). If your project uses Lua 5.1, LuaJIT, or Lua 5.3, replace `5.4` with your active interpreter version.
 
 ### Option 1: Project-level `.luarc.json` (Recommended)
 
@@ -118,32 +120,27 @@ Valua bridges runtime validation with the Lua Language Server (LuaLS) without re
 
 ```mermaid
 flowchart TD
-  subgraph User Code
-    schema["v.object({ ... })"] --> parse["v.safe_parse(Schema, input)"]
-  end
-
-  subgraph Valua LuaLS Engine
-    schema -->|analyze| type_ir["Type IR"]
-    type_ir -->|synthesize| cats["LuaCATS ---@class definitions"]
-    cats -->|attach| base_schema["BaseSchema<Input, Output>"]
-  end
-
-  subgraph LuaLS Runtime
-    base_schema --> luals_engine["LuaLS Type Checker"]
-    parse --> luals_engine
-    luals_engine -->|discriminated union| result["SafeParseSuccess<Output> | SafeParseError"]
-    result -->|if result.success| ide["Full IDE Autocompletion & Hover"]
-  end
+  schema["v.object({ ... })"] --> analyzer["Valua Schema AST Analyzer"]
+  analyzer --> type_ir["Type Intermediate Representation (IR)"]
+  type_ir --> cats["LuaCATS Synthetic Classes"]
+  cats --> base_schema["BaseSchema<Input, Output>"]
+  base_schema --> luals["LuaLS Generic Propagation"]
+  luals --> parse["v.parse() → Output"]
+  luals --> safe_parse["v.safe_parse() → SafeParseResult<Output>"]
 
   classDef source fill:#1d4ed8,stroke:#93c5fd,color:#eff6ff
   classDef plan fill:#7c3aed,stroke:#c4b5fd,color:#f5f3ff
   classDef product fill:#047857,stroke:#6ee7b7,color:#ecfdf5
   classDef effect fill:#b45309,stroke:#fcd34d,color:#fffbeb
-  class schema,parse source
-  class type_ir,cats,base_schema plan
-  class result,luals_engine product
-  class ide effect
+  class schema source
+  class analyzer,type_ir plan
+  class cats,base_schema product
+  class luals,parse,safe_parse effect
 ```
+
+- **In-Memory AST Lowering:** The language server plugin reads AST declarations and materializes hierarchical LuaCATS definitions matching the exact structure of your schemas.
+- **Unified Result Model:** `v.safe_parse` yields `valua.SafeParseResult<O>` (`{ success: boolean, output?: O, issues?: Issue[] }`), providing instant autocomplete and hover across every control-flow branch.
+- **Direct Extraction:** `v.parse` returns `O` non-nullable directly, throwing structured `ValidationError` on failure.
 
 ---
 
@@ -170,7 +167,7 @@ else
 end
 ```
 
-> **Note:** Ordinary Valua users will usually prefer `v.safe_parse(...)` for richer boolean discrimination and formatted error paths. The `~standard` interface is primarily designed for third-party routers, form libraries, and frameworks that accept arbitrary Standard Schema-compliant validators without hard-depending on Valua.
+> **Note:** Ordinary Valua users will usually prefer `v.safe_parse(...)` for formatted error paths. The `~standard` interface is primarily designed for third-party routers, form libraries, and frameworks that accept arbitrary Standard Schema-compliant validators without hard-depending on Valua.
 
 ---
 
@@ -188,7 +185,7 @@ end
 - `v.record(key_schema, value_schema)`: Dynamic key-value mappings.
 - `v.array(item_schema)`: Typed lists.
 - `v.tuple({ item1, item2 })`: Fixed-length positional tuples.
-- `v.union({ s1, s2 })`: Discriminated and structural unions.
+- `v.union({ s1, s2 })`: Structural unions.
 - `v.optional(schema)`: Permissive `T | nil`.
 - `v.lazy(function() return Schema end)`: Recursive schemas.
 - `v.custom(predicate, message)`: Custom validation functions.
@@ -209,7 +206,8 @@ Available actions:
 - `v.non_empty()`, `v.length(n)`, `v.min_length(n)`, `v.max_length(n)`
 - `v.min_value(n)`, `v.max_value(n)`, `v.multiple_of(n)`
 - `v.starts_with(str)`, `v.ends_with(str)`, `v.pattern(lua_pattern)`
-- `v.transform(fn)`: Mutate or sanitize parsed values.
+- `v.check(predicate, message)`: Custom predicate validation.
+- `v.transform(fn)`: Transforms parsed values into a new output representation (e.g. `v.pipe(v.string(), v.transform(tonumber))` $\rightarrow$ `BaseSchema<string, number>`).
 
 ---
 
