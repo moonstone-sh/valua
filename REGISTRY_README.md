@@ -219,10 +219,37 @@ Available actions:
 | `v.parse(schema, input, opts?)` | `O` | Returns parsed value or throws a structured `ValidationError`. |
 | `v.is(schema, input)` | `boolean` | Fast boolean check. Aborts on first issue. |
 | `v.pipe(schema, ...actions)` | `BaseSchema<I, O>` | Composes a base schema with validation/transformation stages. |
+| `v.alias(name, schema)` | `BaseSchema<I, O>` | Assigns a reusable LuaCATS alias for the schema's output type. |
+| `v.assume(schema, value)` | `O` | Unchecked type assertion returning `value` typed as schema output type without validation. |
 
 ---
 
-## 7. Decoupled Module Architecture & Deep Imports
+## 7. Static Typing Helpers (`v.alias` & `v.assume`)
+
+```lua
+local UserSchema = v.object({
+  id = v.integer(),
+  name = v.string(),
+  profile = v.object({ bio = v.optional(v.string()) }),
+})
+
+-- Reusable type alias
+v.alias("User", UserSchema)
+
+---@param user User
+local function greet(user)
+  print(user.name)
+end
+
+-- Unchecked type assertion for known/cached values
+local cached_user = v.assume(UserSchema, cache:get("user"))
+```
+
+> **Warning on `v.assume`:** `v.assume` performs **zero runtime validation or transformation** (identity cost). Use `v.parse` or `v.safe_parse` for untrusted values.
+
+---
+
+## 8. Decoupled Module Architecture & Deep Imports
 
 Valua's dependency graph is architecturally decomposed: every primitive lives in its own file with minimal core dependencies and zero global side effects. You can import individual primitives directly without loading the root module table, making codebases clean and keeping future module bundling and dead-code elimination straightforward:
 

@@ -189,11 +189,44 @@ local value = parse(schema, "hello")
 - `v.transform(fn)`: Transforms parsed values into a new output representation (e.g. `v.pipe(v.string(), v.transform(tonumber))` $\rightarrow$ `BaseSchema<string, number>`).
 
 ### Methods
-`pipe`, `parse`, `safe_parse`, `is`.
+- `v.pipe(schema, ...actions)`: Composes a base schema with validation/transformation stages.
+- `v.parse(schema, input, opts?)`: Parses and validates input, throwing `ValidationError` on failure.
+- `v.safe_parse(schema, input, opts?)`: Parses input returning `{ success = true, output = val }` or `{ success = false, issues = [...] }`.
+- `v.is(schema, input)`: Fast boolean check.
+- `v.alias(name, schema)`: Assigns a reusable LuaCATS alias for the schema's output type.
+- `v.assume(schema, value)`: Unchecked type assertion returning `value` typed as the schema output type without runtime validation.
 
 ---
 
-## 8. Testing & Benchmarking
+## 8. Static Typing Helpers (`v.alias` & `v.assume`)
+
+Valua provides two explicit helpers to bridge runtime schemas with static annotations:
+
+```lua
+local UserSchema = v.object({
+    name = v.string(),
+    age = v.integer(),
+})
+
+-- 1. Reusable Type Alias
+-- Gives the inferred schema output a reusable LuaCATS alias.
+v.alias("User", UserSchema)
+
+---@param user User
+local function greet(user)
+    print(user.name)
+end
+
+-- 2. Unchecked Type Assertion
+-- Asserts that an existing runtime value satisfies the schema output type without validation.
+local trusted_user = v.assume(UserSchema, cache:get("user"))
+```
+
+> **Warning on `v.assume`:** `v.assume` performs **zero runtime validation or transformation** (identity cost). It is designed strictly for trusted/internal boundaries. Use `v.parse` or `v.safe_parse` for untrusted inputs.
+
+---
+
+## 9. Testing & Benchmarking
 
 Run tests:
 ```bash

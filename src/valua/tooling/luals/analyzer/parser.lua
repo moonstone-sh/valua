@@ -179,6 +179,7 @@ function parser.parse_tokens(tokens)
                 local expr = parse_expr()
                 if expr then
                     table.insert(declarations, {
+                        kind = "local",
                         var_name = var_name,
                         expr = expr,
                         pos = local_pos,
@@ -186,6 +187,21 @@ function parser.parse_tokens(tokens)
                 end
             else
                 idx = idx + 1
+            end
+        elseif t and t.type == "identifier" then
+            local stmt_pos = t.pos
+            local start_idx = idx
+            local expr = parse_expr()
+            if expr and expr.type == "call" and expr.func == "alias" then
+                table.insert(declarations, {
+                    kind = "alias_statement",
+                    expr = expr,
+                    pos = stmt_pos,
+                })
+            else
+                if idx == start_idx then
+                    idx = idx + 1
+                end
             end
         else
             idx = idx + 1

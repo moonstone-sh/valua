@@ -106,6 +106,23 @@ function infer.evaluate_expr(expr, env)
             end
             return ir.SchemaType(ir.Union(in_types), ir.Union(out_types))
 
+        elseif fn == "transform" then
+            local transform_arg = args[1]
+            if transform_arg then
+                local fn_name = (transform_arg.type == "ref" and transform_arg.name)
+                    or (transform_arg.type == "literal" and transform_arg.value)
+                if fn_name == "tonumber" then
+                    return ir.SchemaType(ir.Unknown(), ir.Number())
+                elseif fn_name == "tostring" then
+                    return ir.SchemaType(ir.Unknown(), ir.String())
+                elseif fn_name == "tointeger" or fn_name == "math.floor" or fn_name == "math.ceil" then
+                    return ir.SchemaType(ir.Unknown(), ir.Integer())
+                elseif fn_name == "tobool" or fn_name == "boolean" then
+                    return ir.SchemaType(ir.Unknown(), ir.Boolean())
+                end
+            end
+            return ir.SchemaType(ir.Unknown(), ir.Unknown())
+
         elseif fn == "pipe" then
             if #args > 0 then
                 local base_st = infer.evaluate_expr(args[1], env)

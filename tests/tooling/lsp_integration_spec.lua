@@ -72,6 +72,17 @@ local UserSchema = v.object({
     tags = v.array(v.string()),
 })
 
+v.alias("User", UserSchema)
+
+---@param u User
+local function greet(u)
+    ---@type string
+    local n = u.id
+    ---@type integer
+    local a = u.age
+    return n
+end
+
 local res = v.safe_parse(UserSchema, { id = "1", age = 20, tags = { "admin" } })
 
 if res.success then
@@ -86,6 +97,12 @@ end
 local direct_user = v.parse(UserSchema, { id = "2", age = 25, tags = {} })
 ---@type string
 local direct_id = direct_user.id
+
+local trusted_payload = { id = "3", age = 30, tags = { "member" } }
+local assumed_user = v.assume(UserSchema, trusted_payload)
+---@type string
+local assumed_id = assumed_user.id
+greet(assumed_user)
 ]]
 
         local f_src = io.open(tmp_dir .. "/src/main.lua", "w")
