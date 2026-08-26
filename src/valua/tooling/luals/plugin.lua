@@ -82,7 +82,10 @@ local function analyze_source(code, uri)
                     end
                 end
             end
-        elseif is_safe_parse or is_parse then
+        elseif decl.var_name then
+            local st = infer.evaluate_expr(expr, env)
+            env.set(decl.var_name, st)
+
             local count = (var_counts[decl.var_name] or 0) + 1
             var_counts[decl.var_name] = count
 
@@ -92,62 +95,15 @@ local function analyze_source(code, uri)
             end
 
             local ctx = naming.create_context(module_name, root_name)
-            local schema_arg = expr.args and expr.args[1]
-            local target_st = schema_arg and infer.evaluate_expr(schema_arg, env)
+            local cats_str = luacats.emit_declaration(root_name, st, ctx)
 
-            if target_st and target_st.output and target_st.output.kind ~= "Unknown" then
-                local out_type_str = luacats.type_to_string(target_st.output, ctx, function(obj_t, c_ctx)
-                    return c_ctx:full_name()
-                end)
-
-                local cats_str = ""
-                if is_safe_parse then
-                    local class_name = ctx:full_name()
-                    local lines = {
-                        "---@class " .. class_name,
-                        "---@field success boolean",
-                        "---@field output? " .. out_type_str,
-                        "---@field issues? valua.Issue[]",
-                        "---@type " .. class_name,
-                    }
-                    cats_str = table.concat(lines, "\n")
-                elseif is_parse then
-                    cats_str = "---@type " .. out_type_str
-                end
-
-                if cats_str and cats_str ~= "" then
-                    table.insert(results, {
-                        var_name = decl.var_name,
-                        schema_type = target_st,
-                        luacats = cats_str,
-                        pos = decl.pos,
-                    })
-                end
-            end
-        else
-            if decl.var_name then
-                local count = (var_counts[decl.var_name] or 0) + 1
-                var_counts[decl.var_name] = count
-
-                local root_name = decl.var_name
-                if count > 1 then
-                    root_name = root_name .. "_" .. tostring(count)
-                end
-
-                local ctx = naming.create_context(module_name, root_name)
-                local st = infer.evaluate_expr(expr, env)
-                env.set(decl.var_name, st)
-
-                local cats_str = luacats.emit_declaration(root_name, st, ctx)
-
-                if cats_str and cats_str ~= "" then
-                    table.insert(results, {
-                        var_name = decl.var_name,
-                        schema_type = st,
-                        luacats = cats_str,
-                        pos = decl.pos,
-                    })
-                end
+            if cats_str and cats_str ~= "" then
+                table.insert(results, {
+                    var_name = decl.var_name,
+                    schema_type = st,
+                    luacats = cats_str,
+                    pos = decl.pos,
+                })
             end
         end
     end
