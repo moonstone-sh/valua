@@ -33,7 +33,7 @@ if result.success then
     print("Welcome, " .. result.output.name)
 else
     for _, issue in ipairs(result.issues) do
-        print("Error at " .. issue.path_str .. ": " .. issue.message)
+        print("Error at " .. issue.path .. ": " .. issue.message)
     end
 end
 ```

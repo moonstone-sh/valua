@@ -1,5 +1,14 @@
 local path = {}
 
+local path_mt = {
+    __tostring = function(t)
+        return path.format(t)
+    end,
+    __concat = function(a, b)
+        return tostring(a) .. tostring(b)
+    end,
+}
+
 ---@param p? valua.IssuePathItem[]
 ---@return valua.IssuePathItem[]|nil
 function path.clone(p)
@@ -11,14 +20,14 @@ function path.clone(p)
             key = p[i].key,
         }
     end
-    return res
+    return setmetatable(res, path_mt)
 end
 
 ---@param p? valua.IssuePathItem[]
 ---@param item valua.IssuePathItem
 ---@return valua.IssuePathItem[]
 function path.append(p, item)
-    local res = path.clone(p) or {}
+    local res = path.clone(p) or setmetatable({}, path_mt)
     table.insert(res, item)
     return res
 end

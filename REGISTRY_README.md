@@ -47,7 +47,7 @@ if result.success then
   print("Welcome, " .. result.output.profile.display_name)
 else
   for _, issue in ipairs(result.issues) do
-    print(string.format("Validation error at %s: %s", issue.path_str, issue.message))
+    print("Error at " .. issue.path .. ": " .. issue.message)
   end
 end
 ```
