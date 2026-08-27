@@ -23,4 +23,7 @@ jobs:
         with:
           luaVersion: ${{ matrix.runtime }}
       - name: Run the runtime suite
+        env:
+          VALUA_TEST_LUA: lua
         run: lua tests/runner.lua
+

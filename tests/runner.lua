@@ -43,6 +43,20 @@ function assert_false(cond, msg)
     end
 end
 
+function execute_success(...)
+    local ok, _, code = ...
+
+    if ok == true then
+        return true
+    end
+
+    if type(ok) == "number" then
+        return ok == 0
+    end
+
+    return code == 0
+end
+
 -- Run all spec files
 local specs = {
     "tests.schemas.primitives_spec",
