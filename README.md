@@ -1,5 +1,8 @@
 # Valua — Valibot-Inspired Modular Schema Validation for Lua
 
+> Documentation map: [`docs/README.md`](docs/README.md) · contributor guidance:
+> [`AGENTS.md`](AGENTS.md)
+
 **Valua** is a modular, zero-dependency schema validation library for Lua inspired by [Valibot](https://valibot.dev). It brings composable validation actions, structured error reporting, a strictly decomposed module graph, Standard Schema v1 conformance, and an in-memory LuaLS static type compiler to Lua.
 
 ---
