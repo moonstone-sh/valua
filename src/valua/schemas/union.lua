@@ -13,11 +13,11 @@ local function union(schemas, custom_message)
             local branch_issues = {}
 
             for _, sch in ipairs(schemas) do
-                local candidate_ds = dataset_lib.create(dataset.value)
+                local candidate_ds = dataset_lib.create(dataset.value, dataset._fast)
                 candidate_ds._path = dataset._path
                 sch._run(candidate_ds, config)
 
-                if not candidate_ds.issues then
+                if not candidate_ds.issues and not candidate_ds.invalid then
                     dataset.typed = true
                     dataset.value = candidate_ds.value
                     return dataset

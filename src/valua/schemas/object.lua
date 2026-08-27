@@ -39,25 +39,28 @@ local function object(entries, custom_message)
 
             for k, sch in pairs(entries) do
                 local val = dataset.value[k]
-                local child_ds = dataset_lib.create(val)
+                local child_ds = dataset_lib.create(val, dataset._fast)
                 segment.key = k
                 child_path[#child_path + 1] = segment
                 child_ds._path = child_path
 
                 sch._run(child_ds, config)
 
-                if child_ds.issues then
+                if child_ds.issues or child_ds.invalid then
                     has_error = true
-                    for _, iss in ipairs(child_ds.issues) do
-                        -- Child schemas may retain the mutable traversal stack.
-                        -- Snapshot before popping it so callers always receive a
-                        -- stable structured path.
-                        if iss.path == child_path then
-                            iss.path = path_lib.clone(child_path)
-                        elseif not iss.path then
-                            iss.path = path_lib.clone(child_path)
+                    if child_ds.invalid then dataset.invalid = true end
+                    if child_ds.issues then
+                        for _, iss in ipairs(child_ds.issues) do
+                            -- Child schemas may retain the mutable traversal stack.
+                            -- Snapshot before popping it so callers always receive a
+                            -- stable structured path.
+                            if iss.path == child_path then
+                                iss.path = path_lib.clone(child_path)
+                            elseif not iss.path then
+                                iss.path = path_lib.clone(child_path)
+                            end
+                            dataset_lib.add_issue(dataset, iss)
                         end
-                        dataset_lib.add_issue(dataset, iss)
                     end
                 else
                     if child_ds.value ~= nil then

@@ -33,41 +33,47 @@ local function record(key_schema, value_schema, custom_message)
 
             for k, v in pairs(dataset.value) do
                 -- Validate key
-                local key_ds = dataset_lib.create(k)
+                local key_ds = dataset_lib.create(k, dataset._fast)
                 segment.key = k
                 child_path[#child_path + 1] = segment
                 key_ds._path = child_path
                 key_schema._run(key_ds, config)
 
-                if key_ds.issues then
+                if key_ds.issues or key_ds.invalid then
                     has_error = true
-                    for _, iss in ipairs(key_ds.issues) do
-                        if iss.path == child_path or not iss.path then
-                            iss.path = path_lib.clone(child_path)
+                    if key_ds.invalid then dataset.invalid = true end
+                    if key_ds.issues then
+                        for _, iss in ipairs(key_ds.issues) do
+                            if iss.path == child_path or not iss.path then
+                                iss.path = path_lib.clone(child_path)
+                            end
+                            dataset_lib.add_issue(dataset, iss)
                         end
-                        dataset_lib.add_issue(dataset, iss)
                     end
                 end
                 child_path[#child_path] = nil
 
                 -- Validate value with the same temporary path segment.
-                local val_ds = dataset_lib.create(v)
+                local val_ds = dataset_lib.create(v, dataset._fast)
                 child_path[#child_path + 1] = segment
                 val_ds._path = child_path
                 value_schema._run(val_ds, config)
 
-                if val_ds.issues then
+                if val_ds.issues or val_ds.invalid then
                     has_error = true
-                    for _, iss in ipairs(val_ds.issues) do
-                        if iss.path == child_path or not iss.path then
-                            iss.path = path_lib.clone(child_path)
+                    if val_ds.invalid then dataset.invalid = true end
+                    if val_ds.issues then
+                        for _, iss in ipairs(val_ds.issues) do
+                            if iss.path == child_path or not iss.path then
+                                iss.path = path_lib.clone(child_path)
+                            end
+                            dataset_lib.add_issue(dataset, iss)
                         end
-                        dataset_lib.add_issue(dataset, iss)
                     end
                 end
                 child_path[#child_path] = nil
 
-                if not key_ds.issues and not val_ds.issues then
+                if not key_ds.issues and not key_ds.invalid and not val_ds.issues and not val_ds.invalid then
                     out[key_ds.value] = val_ds.value
                 end
 

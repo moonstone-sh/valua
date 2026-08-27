@@ -13,13 +13,13 @@ local function pipe(schema, ...)
         pipe_stages = stages,
         _run = function(dataset, config)
             schema._run(dataset, config)
-            if dataset.issues and config and config.abort_early then
+            if (dataset.issues or dataset.invalid) and config and config.abort_early then
                 return dataset
             end
 
             for _, stage in ipairs(stages) do
                 stage._run(dataset, config)
-                if dataset.issues and config and config.abort_early then
+                if (dataset.issues or dataset.invalid) and config and config.abort_early then
                     break
                 end
             end

@@ -3,7 +3,7 @@ local function transform(fn)
         kind = "transformation",
         type = "transform",
         _run = function(dataset, _config)
-            if not dataset.issues then
+            if not dataset.issues and not dataset.invalid then
                 dataset.value = fn(dataset.value)
             end
             return dataset

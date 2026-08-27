@@ -5,8 +5,9 @@ benchmark of process startup, memory, bundle size, generated code, or the
 relative quality of Lua and JavaScript virtual machines.
 
 `bench.lua` is dependency-free and supports Lua 5.1 through 5.5 and LuaJIT
-2.1. It reports seven shared cases: flat object success, nested object success,
-string pipeline success, and primitive/three-issue/ten-issue/deep failures.
+2.1. It reports twelve shared cases: object, array, tuple, record, loose and
+strict structural paths; string pipeline success; and primitive/three-issue/
+ten-issue/deep failures.
 The runner uses two warm-up rounds of 10,000 calls and reports the median of
 five rounds of 50,000 calls. Override those values only through the documented
 `VALUA_BENCH_*` environment variables so reports remain comparable.

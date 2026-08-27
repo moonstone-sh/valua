@@ -42,6 +42,11 @@ local ten_issues_schema = v.object({
     f6 = v.boolean(), f7 = v.string(), f8 = v.integer(), f9 = v.boolean(), f10 = v.string(),
 })
 local deep_schema = v.object({ l1 = v.object({ l2 = v.object({ l3 = v.object({ l4 = v.object({ l5 = v.string() }) }) }) }) })
+local array_schema = v.array(v.integer())
+local tuple_schema = v.tuple({ v.string(), v.integer(), v.boolean() })
+local record_schema = v.record(v.string(), v.integer())
+local loose_schema = v.loose_object({ id = v.integer() })
+local strict_schema = v.strict_object({ id = v.integer() })
 
 bench("flat_success", function() v.safe_parse(flat_schema, flat_valid) end)
 bench("nested_success", function() v.safe_parse(nested_schema, nested_valid) end)
@@ -50,6 +55,11 @@ bench("primitive_failure", function() v.safe_parse(v.string(), 12345) end)
 bench("three_issue_failure", function() v.safe_parse(three_issues_schema, { a = 123, b = "bad", c = 999 }) end)
 bench("ten_issue_failure", function() v.safe_parse(ten_issues_schema, { f1 = 1, f2 = "a", f3 = 3, f4 = 4, f5 = "b", f6 = 6, f7 = 7, f8 = "c", f9 = 9, f10 = 10 }) end)
 bench("deep_failure", function() v.safe_parse(deep_schema, { l1 = { l2 = { l3 = { l4 = { l5 = 99999 } } } } }) end)
+bench("array_success", function() v.safe_parse(array_schema, { 1, 2, 3, 4, 5 }) end)
+bench("tuple_success", function() v.safe_parse(tuple_schema, { "ok", 1, true }) end)
+bench("record_success", function() v.safe_parse(record_schema, { a = 1, b = 2, c = 3 }) end)
+bench("loose_object_success", function() v.safe_parse(loose_schema, { id = 1, extra = "kept" }) end)
+bench("strict_object_failure", function() v.safe_parse(strict_schema, { id = 1, extra = true }) end)
 
 if JSON then
     local runtime = _VERSION

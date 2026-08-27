@@ -35,6 +35,11 @@ const tenIssueSchema = v.object({
   f6: v.boolean(), f7: v.string(), f8: v.number(), f9: v.boolean(), f10: v.string(),
 });
 const deepSchema = v.object({ l1: v.object({ l2: v.object({ l3: v.object({ l4: v.object({ l5: v.string() }) }) }) }) });
+const arraySchema = v.array(v.number());
+const tupleSchema = v.tuple([v.string(), v.number(), v.boolean()]);
+const recordSchema = v.record(v.string(), v.number());
+const looseSchema = v.looseObject({ id: v.number() });
+const strictSchema = v.strictObject({ id: v.number() });
 
 bench('flat_success', () => v.safeParse(flatSchema, flatValid));
 bench('nested_success', () => v.safeParse(nestedSchema, nestedValid));
@@ -43,6 +48,11 @@ bench('primitive_failure', () => v.safeParse(v.string(), 12345));
 bench('three_issue_failure', () => v.safeParse(threeIssueSchema, { a: 123, b: 'bad', c: 999 }));
 bench('ten_issue_failure', () => v.safeParse(tenIssueSchema, { f1: 1, f2: 'a', f3: 3, f4: 4, f5: 'b', f6: 6, f7: 7, f8: 'c', f9: 9, f10: 10 }));
 bench('deep_failure', () => v.safeParse(deepSchema, { l1: { l2: { l3: { l4: { l5: 99999 } } } } }));
+bench('array_success', () => v.safeParse(arraySchema, [1, 2, 3, 4, 5]));
+bench('tuple_success', () => v.safeParse(tupleSchema, ['ok', 1, true]));
+bench('record_success', () => v.safeParse(recordSchema, { a: 1, b: 2, c: 3 }));
+bench('loose_object_success', () => v.safeParse(looseSchema, { id: 1, extra: 'kept' }));
+bench('strict_object_failure', () => v.safeParse(strictSchema, { id: 1, extra: true }));
 
 if (json) {
   console.log(JSON.stringify({
