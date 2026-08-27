@@ -17,6 +17,7 @@ local function length(target_len, custom_message)
 
             if len ~= target_len then
                 local msg = custom_message or ("Expected length " .. tostring(target_len) .. ", received " .. tostring(len))
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 dataset_lib.add_issue(dataset, issue.create({
                     kind = "validation",
                     type = "length",

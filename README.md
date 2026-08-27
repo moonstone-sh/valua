@@ -205,6 +205,7 @@ local value = parse(schema, "hello")
 - `v.pipe(schema, ...actions)`: Composes a base schema with validation/transformation stages.
 - `v.parse(schema, input, opts?)`: Parses and validates input, throwing `ValidationError` on failure.
 - `v.safe_parse(schema, input, opts?)`: Parses input returning `{ success = true, output = val }` or `{ success = false, issues = [...] }`.
+- `v.safe_parse(schema, input, { abort_early = true })`: Stops after the first issue when complete diagnostics are unnecessary.
 - `v.is(schema, input)`: Fast boolean check.
 - `v.alias(name, schema)`: Declares a reusable LuaLS output alias and returns `schema` unchanged.
 - `v.assume(schema, value)`: Unchecked type assertion returning `value` typed as the schema output type without runtime validation.

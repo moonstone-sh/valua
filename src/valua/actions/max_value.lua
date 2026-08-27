@@ -12,6 +12,7 @@ local function max_value(max_val, custom_message)
             local val = dataset.value
             if type(val) == "number" and val > max_val then
                 local msg = custom_message or ("Expected maximum value " .. tostring(max_val) .. ", received " .. tostring(val))
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 dataset_lib.add_issue(dataset, issue.create({
                     kind = "validation",
                     type = "max_value",

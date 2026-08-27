@@ -17,6 +17,7 @@ local function min_length(min_len, custom_message)
 
             if len < min_len then
                 local msg = custom_message or ("Expected minimum length " .. tostring(min_len) .. ", received " .. tostring(len))
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 dataset_lib.add_issue(dataset, issue.create({
                     kind = "validation",
                     type = "min_length",

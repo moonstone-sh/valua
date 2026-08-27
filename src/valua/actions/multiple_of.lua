@@ -12,6 +12,7 @@ local function multiple_of(factor, custom_message)
             local val = dataset.value
             if type(val) == "number" and (val % factor ~= 0) then
                 local msg = custom_message or ("Expected multiple of " .. tostring(factor) .. ", received " .. tostring(val))
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 dataset_lib.add_issue(dataset, issue.create({
                     kind = "validation",
                     type = "multiple_of",

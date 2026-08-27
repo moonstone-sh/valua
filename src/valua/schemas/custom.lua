@@ -20,6 +20,7 @@ local function custom(predicate, custom_message)
                 dataset.typed = true
             else
                 local msg = custom_message or "Custom validation failed"
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 dataset_lib.add_issue(dataset, issue.create({
                     kind = "schema",
                     type = "custom",

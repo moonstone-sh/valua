@@ -17,6 +17,7 @@ local function max_length(max_len, custom_message)
 
             if len > max_len then
                 local msg = custom_message or ("Expected maximum length " .. tostring(max_len) .. ", received " .. tostring(len))
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 dataset_lib.add_issue(dataset, issue.create({
                     kind = "validation",
                     type = "max_length",

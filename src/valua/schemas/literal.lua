@@ -14,6 +14,7 @@ local function literal(expected_value, custom_message)
                 dataset.typed = true
             else
                 local msg = custom_message or ("Expected literal " .. tostring(expected_value) .. ", received " .. tostring(dataset.value))
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 dataset_lib.add_issue(dataset, issue.create({
                     kind = "schema",
                     type = "literal",

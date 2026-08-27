@@ -18,6 +18,7 @@ local function non_empty(custom_message)
 
             if len == 0 then
                 local msg = custom_message or "Expected non-empty value"
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 dataset_lib.add_issue(dataset, issue.create({
                     kind = "validation",
                     type = "non_empty",

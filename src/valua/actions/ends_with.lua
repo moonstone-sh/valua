@@ -13,6 +13,7 @@ local function ends_with(suffix, custom_message)
             if type(val) == "string" then
                 if #suffix > 0 and string.sub(val, -#suffix) ~= suffix then
                     local msg = custom_message or ("Expected string ending with '" .. suffix .. "'")
+                    if dataset_lib.fast_fail(dataset) then return dataset end
                     dataset_lib.add_issue(dataset, issue.create({
                         kind = "validation",
                         type = "ends_with",

@@ -22,6 +22,7 @@ local function picklist(options, custom_message)
                 dataset.typed = true
             else
                 local msg = custom_message or ("Expected picklist (" .. expected_str .. "), received " .. tostring(dataset.value))
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 dataset_lib.add_issue(dataset, issue.create({
                     kind = "schema",
                     type = "picklist",

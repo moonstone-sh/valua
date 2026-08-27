@@ -14,6 +14,7 @@ local function pattern(lua_pattern, custom_message)
                 local s, _ = string.find(val, lua_pattern)
                 if not s then
                     local msg = custom_message or ("Expected string matching pattern '" .. lua_pattern .. "'")
+                    if dataset_lib.fast_fail(dataset) then return dataset end
                     dataset_lib.add_issue(dataset, issue.create({
                         kind = "validation",
                         type = "pattern",

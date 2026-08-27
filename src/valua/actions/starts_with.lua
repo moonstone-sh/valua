@@ -13,6 +13,7 @@ local function starts_with(prefix, custom_message)
             if type(val) == "string" then
                 if string.sub(val, 1, #prefix) ~= prefix then
                     local msg = custom_message or ("Expected string starting with '" .. prefix .. "'")
+                    if dataset_lib.fast_fail(dataset) then return dataset end
                     dataset_lib.add_issue(dataset, issue.create({
                         kind = "validation",
                         type = "starts_with",

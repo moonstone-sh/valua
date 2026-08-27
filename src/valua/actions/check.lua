@@ -17,6 +17,7 @@ local function check(predicate, custom_message)
 
             if not ok then
                 local msg = custom_message or "Check validation failed"
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 dataset_lib.add_issue(dataset, issue.create({
                     kind = "validation",
                     type = "check",
