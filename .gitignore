@@ -2,6 +2,7 @@
 .moonstone/
 .ballad/
 dist/
+benchmarks/valibot/node_modules/
 
 # Zig
 zig-cache/

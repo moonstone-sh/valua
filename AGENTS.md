@@ -16,3 +16,10 @@ Schema` is an optional zero-runtime shorthand parsed by the LuaLS plugin.
 
 Record constraints and unsupported behavior in [`LIMITATIONS.md`](LIMITATIONS.md)
 and put longer design material in `docs/`.
+
+The runtime support target is Lua 5.1–5.5 and LuaJIT 2.1; Lua 5.0 is not a
+target. `moonstone.toml` pins the maintainer environment to Lua 5.4, not the
+consumer compatibility contract. Keep the registry artifact ABI-agnostic while
+Valua remains source-only. If native code, bytecode, or generated
+runtime-specific output is introduced, add explicit ABI/target release coverage
+before publishing. See [`docs/COMPATIBILITY.md`](docs/COMPATIBILITY.md).

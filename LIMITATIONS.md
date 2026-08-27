@@ -20,6 +20,8 @@ This document outlines the design boundaries, known limits, and architectural sc
 2. **Lua Patterns:** The `v.pattern()` action uses native Lua pattern matching (`string.find`), not PCRE / JS RegExp.
 3. **Integer Semantics:** Valua's `v.integer()` relies on mathematical integer checks (`val % 1 == 0`) for maximum compatibility across Lua 5.1, 5.2, 5.3, 5.4, and LuaJIT.
 
+4. **Runtime floor:** Lua 5.0 is unsupported. The runtime target is Lua 5.1–5.5 and LuaJIT 2.1; the source uses Lua 5.1 language features such as the `#` length operator. The maintainer's Lua 5.4 Moonstone environment is not a consumer runtime restriction.
+
 ---
 
 ## 3. Tooling Independence

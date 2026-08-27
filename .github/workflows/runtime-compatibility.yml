@@ -1,0 +1,26 @@
+name: Valua runtime compatibility
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-tests:
+    name: Lua ${{ matrix.runtime }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        runtime: ["5.1", "5.2", "5.3", "5.4", "5.5", "luajit-2.1"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leafo/gh-actions-lua@v13
+        with:
+          luaVersion: ${{ matrix.runtime }}
+      - name: Run the runtime suite
+        run: lua tests/runner.lua

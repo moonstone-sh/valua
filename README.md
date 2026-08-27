@@ -5,6 +5,11 @@
 
 **Valua** is a modular, zero-dependency schema validation library for Lua inspired by [Valibot](https://valibot.dev). It brings composable validation actions, structured error reporting, a strictly decomposed module graph, Standard Schema v1 conformance, and an in-memory LuaLS static type compiler to Lua.
 
+The pure-Lua runtime supports Lua 5.1–5.5 and LuaJIT 2.1. Moonstone publishes
+one portable source artifact per Valua version; it does not require a separate
+Valua release for each Lua ABI. See [runtime compatibility](docs/COMPATIBILITY.md)
+and the [benchmark protocol](benchmarks/README.md).
+
 ---
 
 ## 1. Quick Start

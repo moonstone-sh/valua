@@ -1,0 +1,12 @@
+{
+  "name": "valua-valibot-benchmarks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "bench": "node runner.mjs",
+    "bench:bun": "bun runner.mjs"
+  },
+  "dependencies": {
+    "valibot": "1.4.2"
+  }
+}
