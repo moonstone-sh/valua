@@ -14,6 +14,14 @@ and the [benchmark protocol](benchmarks/README.md).
 
 ## 1. Quick Start
 
+### Installation
+
+```sh
+moon add moonstone/valua
+```
+
+### Basic Usage
+
 ```lua
 local v = require("valua")
 
