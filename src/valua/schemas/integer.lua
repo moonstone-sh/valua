@@ -21,6 +21,7 @@ local function integer(custom_message)
             if is_int then
                 dataset.typed = true
             else
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 local recv
                 if type(val) == "number" then
                     if val ~= val then recv = "NaN"

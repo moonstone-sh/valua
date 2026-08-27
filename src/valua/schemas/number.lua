@@ -13,6 +13,7 @@ local function number(custom_message)
             if type(val) == "number" and val == val then
                 dataset.typed = true
             else
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 local recv = type(val) == "number" and "NaN" or type(val)
                 local msg = custom_message or ("Expected number, received " .. recv)
                 dataset_lib.add_issue(dataset, issue.create({

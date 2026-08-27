@@ -33,4 +33,15 @@ function dataset.add_issue(ds, issue)
     ds.issues[#ds.issues + 1] = issue
 end
 
+---Mark a boolean-only validation as failed before diagnostic construction.
+---@param ds valua.Dataset
+---@return boolean true when callers should skip issue allocation
+function dataset.fast_fail(ds)
+    if ds._fast then
+        ds.invalid = true
+        return true
+    end
+    return false
+end
+
 return dataset

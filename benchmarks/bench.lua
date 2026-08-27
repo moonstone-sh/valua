@@ -60,6 +60,7 @@ bench("tuple_success", function() v.safe_parse(tuple_schema, { "ok", 1, true }) 
 bench("record_success", function() v.safe_parse(record_schema, { a = 1, b = 2, c = 3 }) end)
 bench("loose_object_success", function() v.safe_parse(loose_schema, { id = 1, extra = "kept" }) end)
 bench("strict_object_failure", function() v.safe_parse(strict_schema, { id = 1, extra = true }) end)
+bench("is_object_failure", function() v.is(flat_schema, { id = "bad", name = "Alice", active = true }) end)
 
 if JSON then
     local runtime = _VERSION

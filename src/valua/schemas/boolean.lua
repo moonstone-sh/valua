@@ -12,6 +12,7 @@ local function boolean(custom_message)
             if type(dataset.value) == "boolean" then
                 dataset.typed = true
             else
+                if dataset_lib.fast_fail(dataset) then return dataset end
                 local msg = custom_message or ("Expected boolean, received " .. type(dataset.value))
                 dataset_lib.add_issue(dataset, issue.create({
                     kind = "schema",

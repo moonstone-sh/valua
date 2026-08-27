@@ -53,6 +53,7 @@ bench('tuple_success', () => v.safeParse(tupleSchema, ['ok', 1, true]));
 bench('record_success', () => v.safeParse(recordSchema, { a: 1, b: 2, c: 3 }));
 bench('loose_object_success', () => v.safeParse(looseSchema, { id: 1, extra: 'kept' }));
 bench('strict_object_failure', () => v.safeParse(strictSchema, { id: 1, extra: true }));
+bench('is_object_failure', () => v.is(flatSchema, { id: 'bad', name: 'Alice', active: true }));
 
 if (json) {
   console.log(JSON.stringify({
