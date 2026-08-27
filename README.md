@@ -135,7 +135,11 @@ end
 
 ## 5. Architecture & Type System
 
-Valua operates across four cleanly separated layers: runtime validation, the LuaLS type inference engine, Standard Schema interoperability, and deep modular exports.
+Valua separates runtime/value semantics from tooling-only declarations: schemas,
+actions, parsing, and `v.assume` are Lua runtime APIs; `---@valua-*` comments
+are consumed only by the LuaLS plugin and never enter the runtime dependency
+graph. Standard Schema interoperability and deep modular exports remain runtime
+concerns.
 
 ```mermaid
 flowchart TD
@@ -157,8 +161,9 @@ flowchart TD
     class luals,parse,safe_parse effect
 ```
 
-- **Runtime Execution:** Pure Lua tables and closures with zero global state.
-- **Type Propagation:** `v.safe_parse` produces `valua.SafeParseResult<O>` (`{ success = boolean, output? = O, issues? = Issue[] }`) for seamless autocomplete and hover across all scopes, while `v.parse` returns non-nullable `O` directly.
+- **Runtime Execution:** Pure Lua tables and closures with zero global state. `v.assume` remains an identity function because it participates in value flow.
+- **Tooling Directives:** `---@valua-alias User UserSchema` names a previously declared schema output without importing a runtime alias module or executing code.
+- **Type Propagation:** `v.safe_parse` produces `valua.SafeParseResult<O>`: success has `success = true` and `output = O`; failure has `success = false` and `issues = Issue[]`. `v.parse` returns non-nullable `O` directly.
 - **Zero-Copy Standard Schema:** Native issues already satisfy the `{ message, path = { { key } } }` contract, enabling zero-copy standard validation results.
 
 ---
@@ -196,12 +201,11 @@ local value = parse(schema, "hello")
 - `v.parse(schema, input, opts?)`: Parses and validates input, throwing `ValidationError` on failure.
 - `v.safe_parse(schema, input, opts?)`: Parses input returning `{ success = true, output = val }` or `{ success = false, issues = [...] }`.
 - `v.is(schema, input)`: Fast boolean check.
-- `v.alias(name, schema)`: Assigns a reusable LuaCATS alias for the schema's output type.
 - `v.assume(schema, value)`: Unchecked type assertion returning `value` typed as the schema output type without runtime validation.
 
 ---
 
-## 8. Static Typing Helpers (`v.alias` & `v.assume`)
+## 8. Static Typing Helpers (`@valua-alias` & `v.assume`)
 
 Valua provides two explicit helpers to bridge runtime schemas with static annotations:
 
@@ -211,9 +215,16 @@ local UserSchema = v.object({
     age = v.integer(),
 })
 
--- 1. Reusable Type Alias
--- Gives the inferred schema output a reusable LuaCATS alias.
-v.alias("User", UserSchema)
+-- 1. Reusable Type Alias (tooling-only; not Lua code)
+---@valua-alias User UserSchema
+
+-- `v.safe_parse(UserSchema, value)` is synthesized as
+-- `valua.SafeParseResult<User>` by the LuaLS plugin.
+-- Inside `if result.success`, `result.output` is a non-optional User.
+
+`---@valua-alias Name Schema` declares a reusable LuaLS alias for a previously
+declared schema. It is a comment directive, has no validation semantics, and is
+always zero-cost at runtime.
 
 ---@param user User
 local function greet(user)

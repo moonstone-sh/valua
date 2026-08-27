@@ -10,6 +10,7 @@ This document outlines the design boundaries, known limits, and architectural sc
 2. **Dynamic Expressions:** Arbitrary runtime schema factories (e.g., `get_schema_from_network()`) degrade gracefully to `unknown` static type annotations.
 3. **Cross-File Resolution:** In v0.1, cross-file schema symbol evaluation is handled by LuaLS propagating return type generics rather than cross-file AST crawling.
 4. **Arbitrary Transformations:** `v.transform(fn)` lowers output type to `unknown` unless explicit static types are declared, as inspecting arbitrary Lua closure return types statically is non-deterministic.
+5. **Tooling Directives:** `---@valua-alias Name Schema` resolves only a previously declared same-file schema symbol. Invalid, forward, or dynamic references are ignored rather than producing an unsound type.
 
 ---
 
@@ -24,3 +25,6 @@ This document outlines the design boundaries, known limits, and architectural sc
 ## 3. Tooling Independence
 
 The core validation runtime in `src/valua/` has zero dependencies on Moonstone, Ballad, or the LuaLS type compiler. The type tooling in `src/valua/tooling/` is an optional developer enhancement layer.
+
+`---@valua-*` comments are tooling-only: they do not create runtime exports,
+requireable modules, validation behavior, or production instructions.

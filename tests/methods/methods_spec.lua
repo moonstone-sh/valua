@@ -1,6 +1,12 @@
 local v = require("valua")
 
 describe("Public Methods (parse, safe_parse, is, pipe)", function()
+    it("does not expose tooling directives at runtime", function()
+        assert_equal(v.alias, nil)
+        local ok = pcall(require, "valua.methods.alias")
+        assert_false(ok, "alias must not be available through a deep runtime import")
+    end)
+
     it("parse returns value or throws ValidationError", function()
         local s = v.string()
         assert_equal(v.parse(s, "test"), "test")

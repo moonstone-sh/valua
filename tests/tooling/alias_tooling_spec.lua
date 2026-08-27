@@ -1,11 +1,11 @@
 local plugin = require("valua.tooling.luals.plugin")
 
-describe("LuaLS Tooling - v.alias Static Analysis", function()
+describe("LuaLS Tooling - @valua-alias Static Analysis", function()
     it("synthesizes alias for primitive string schema", function()
         local code = [[
             local v = require("valua")
             local NameSchema = v.string()
-            v.alias("Name", NameSchema)
+            ---@valua-alias Name NameSchema
         ]]
 
         local res = plugin.analyze_source(code, "test/main.lua")
@@ -27,7 +27,7 @@ describe("LuaLS Tooling - v.alias Static Analysis", function()
                 id = v.integer(),
                 name = v.string(),
             })
-            v.alias("User", UserSchema)
+            ---@valua-alias User UserSchema
         ]]
 
         local res = plugin.analyze_source(code, "test/main.lua")
@@ -40,12 +40,59 @@ describe("LuaLS Tooling - v.alias Static Analysis", function()
         assert_true(found_alias, "should emit ---@alias User test.main.UserSchema")
     end)
 
+    it("propagates a directive alias into safe_parse results", function()
+        local code = [[
+            local v = require("valua")
+            local UserSchema = v.object({
+                name = v.string(),
+                age = v.integer(),
+            })
+            ---@valua-alias User UserSchema
+            local UsersSchema = v.array(UserSchema)
+            local result = v.safe_parse(UserSchema, { name = "Max", age = 24 })
+        ]]
+
+        local res = plugin.analyze_source(code, "test/main.lua")
+        local found_schema = false
+        local found_alias = false
+        local found_array = false
+        local found_result = false
+        for _, r in ipairs(res) do
+            if r.var_name == "UserSchema" and r.luacats:find("valua%.BaseSchema") then
+                found_schema = true
+            elseif r.var_name == "User" and r.luacats:find("---@alias User test%.main%.UserSchema") then
+                found_alias = true
+            elseif r.var_name == "UsersSchema" and r.luacats:find("test%.main%.UserSchema%[%]") then
+                found_array = true
+            elseif r.var_name == "result" and r.luacats:find("valua%.SafeParseResult<User>") then
+                found_result = true
+            end
+        end
+        assert_true(found_schema, "the schema declaration should remain independent")
+        assert_true(found_alias, "the directive should emit the named output type")
+        assert_true(found_array, "later combinators should retain the schema shape")
+        assert_true(found_result, "safe_parse should retain the named output type")
+    end)
+
+    it("does not treat runtime calls as tooling directives", function()
+        local code = [[
+            local v = require("valua")
+            local UserSchema = v.object({ name = v.string() })
+            v.alias("User", UserSchema)
+        ]]
+
+        local res = plugin.analyze_source(code, "test/main.lua")
+        for _, r in ipairs(res) do
+            assert_false(r.var_name == "User", "runtime calls are not directives")
+        end
+    end)
+
     it("synthesizes alias for array schema", function()
         local code = [[
             local v = require("valua")
             local UserSchema = v.object({ name = v.string() })
             local UsersSchema = v.array(UserSchema)
-            v.alias("Users", UsersSchema)
+            ---@valua-alias Users UsersSchema
         ]]
 
         local res = plugin.analyze_source(code, "test/main.lua")
@@ -62,7 +109,7 @@ describe("LuaLS Tooling - v.alias Static Analysis", function()
         local code = [[
             local v = require("valua")
             local RoleSchema = v.picklist({ "admin", "member", "guest" })
-            v.alias("Role", RoleSchema)
+            ---@valua-alias Role RoleSchema
         ]]
 
         local res = plugin.analyze_source(code, "test/main.lua")
@@ -79,7 +126,7 @@ describe("LuaLS Tooling - v.alias Static Analysis", function()
         local code = [[
             local v = require("valua")
             local NumSchema = v.pipe(v.string(), v.transform(tonumber))
-            v.alias("NumberOutput", NumSchema)
+            ---@valua-alias NumberOutput NumSchema
         ]]
 
         local res = plugin.analyze_source(code, "test/main.lua")
@@ -92,12 +139,32 @@ describe("LuaLS Tooling - v.alias Static Analysis", function()
         assert_true(found_alias, "should emit transformed output type in alias")
     end)
 
+    it("synthesizes aliases for union and nested object outputs", function()
+        local code = [[
+            local v = require("valua")
+            local UserSchema = v.object({
+                profile = v.object({ display_name = v.string() }),
+            })
+            local ResultSchema = v.union({ UserSchema, v.string() })
+            ---@valua-alias Result ResultSchema
+        ]]
+
+        local res = plugin.analyze_source(code, "test/main.lua")
+        local found = false
+        for _, r in ipairs(res) do
+            if r.var_name == "Result" and r.luacats:find("test%.main%.UserSchema") and r.luacats:find("|string") then
+                found = true
+            end
+        end
+        assert_true(found, "should emit an alias for nested and union schema outputs")
+    end)
+
     it("deduplicates identical alias declarations", function()
         local code = [[
             local v = require("valua")
             local S = v.string()
-            v.alias("User", S)
-            v.alias("User", S)
+            ---@valua-alias User S
+            ---@valua-alias User S
         ]]
 
         local res = plugin.analyze_source(code, "test/main.lua")
@@ -115,8 +182,8 @@ describe("LuaLS Tooling - v.alias Static Analysis", function()
             local v = require("valua")
             local S1 = v.string()
             local S2 = v.integer()
-            v.alias("User", S1)
-            v.alias("User", S2)
+            ---@valua-alias User S1
+            ---@valua-alias User S2
         ]]
 
         local res = plugin.analyze_source(code, "test/main.lua")
@@ -129,18 +196,17 @@ describe("LuaLS Tooling - v.alias Static Analysis", function()
         assert_equal(#user_aliases, 1, "conflicting second alias must be rejected")
     end)
 
-    it("ignores invalid or dynamic alias names safely", function()
+    it("ignores invalid directive names safely", function()
         local code = [[
             local v = require("valua")
             local S = v.string()
-            v.alias(some_dyn_var, S)
-            v.alias("123-bad-ident", S)
+            ---@valua-alias 123-bad-ident S
         ]]
 
         local res = plugin.analyze_source(code, "test/main.lua")
         local found_bad = false
         for _, r in ipairs(res) do
-            if r.var_name == "123-bad-ident" or r.var_name == "some_dyn_var" then
+            if r.var_name == "123-bad-ident" then
                 found_bad = true
             end
         end
@@ -150,7 +216,7 @@ describe("LuaLS Tooling - v.alias Static Analysis", function()
     it("ignores unresolved schema references safely", function()
         local code = [[
             local v = require("valua")
-            v.alias("UnknownType", NonExistentSchema)
+            ---@valua-alias UnknownType NonExistentSchema
         ]]
 
         local res = plugin.analyze_source(code, "test/main.lua")

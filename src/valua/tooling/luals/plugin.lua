@@ -42,44 +42,64 @@ local function analyze_source(code, uri)
     local var_counts = {}
 
     local seen_aliases = {}
+    local schema_aliases = setmetatable({}, { __mode = "k" })
 
     for _, decl in ipairs(decls) do
         local expr = decl.expr
         local is_safe_parse = expr and expr.type == "call" and expr.func == "safe_parse"
-        local is_parse = expr and expr.type == "call" and (expr.func == "parse" or expr.func == "assume")
-        local is_alias = expr and expr.type == "call" and expr.func == "alias"
 
-        if is_alias then
-            local name_arg = expr.args and expr.args[1]
-            local schema_arg = expr.args and expr.args[2]
+        if decl.kind == "alias_directive" then
+            local alias_name = decl.alias_name
+            local target_st = env.get(decl.schema_name)
+            if is_valid_alias_name(alias_name) and target_st and target_st.output and target_st.output.kind ~= "Unknown" and target_st.output.kind ~= "Unresolved" then
+                local alias_ctx = naming.create_context(module_name, alias_name)
+                local out_type_str = luacats.type_to_string(target_st.output, alias_ctx, function(obj_t, c_ctx)
+                    return c_ctx:full_name()
+                end)
 
-            if name_arg and name_arg.type == "literal" and type(name_arg.value) == "string" then
-                local alias_name = name_arg.value
-                if is_valid_alias_name(alias_name) then
-                    local target_st = schema_arg and infer.evaluate_expr(schema_arg, env)
-                    if target_st and target_st.output and target_st.output.kind ~= "Unknown" and target_st.output.kind ~= "Unresolved" then
-                        local alias_ctx = naming.create_context(module_name, alias_name)
-                        local out_type_str = luacats.type_to_string(target_st.output, alias_ctx, function(obj_t, c_ctx)
-                            return c_ctx:full_name()
-                        end)
-
-                        if out_type_str and out_type_str ~= "unknown" then
-                            if seen_aliases[alias_name] then
-                                -- Exact match -> deduplicate; mismatch -> conflicting alias, refuse synthesis
-                                if seen_aliases[alias_name] ~= out_type_str then
-                                    -- conflict: do not emit conflicting type
-                                end
-                            else
-                                seen_aliases[alias_name] = out_type_str
-                                table.insert(results, {
-                                    var_name = alias_name,
-                                    schema_type = target_st,
-                                    luacats = "---@alias " .. alias_name .. " " .. out_type_str,
-                                    pos = decl.pos,
-                                })
-                            end
-                        end
-                    end
+                if out_type_str and out_type_str ~= "unknown" and not seen_aliases[alias_name] then
+                    seen_aliases[alias_name] = out_type_str
+                    schema_aliases[target_st.output] = alias_name
+                    table.insert(results, {
+                        var_name = alias_name,
+                        schema_type = target_st,
+                        luacats = "---@alias " .. alias_name .. " " .. out_type_str,
+                        pos = decl.pos,
+                    })
+                end
+            end
+        elseif decl.var_name and is_safe_parse then
+            local schema_arg = expr.args and expr.args[1]
+            local target_st = schema_arg and infer.evaluate_expr(schema_arg, env)
+            if target_st and target_st.output and target_st.output.kind ~= "Unknown" then
+                local output_name = schema_aliases[target_st.output]
+                    or luacats.type_to_string(target_st.output, naming.create_context(module_name, decl.var_name), function(obj_t, c_ctx)
+                        return c_ctx:full_name()
+                    end)
+                if output_name and output_name ~= "unknown" then
+                    table.insert(results, {
+                        var_name = decl.var_name,
+                        schema_type = target_st,
+                        luacats = "---@type valua.SafeParseResult<" .. output_name .. ">",
+                        pos = decl.pos,
+                    })
+                end
+            end
+        elseif decl.var_name and expr and expr.type == "call" and expr.func == "parse" then
+            local schema_arg = expr.args and expr.args[1]
+            local target_st = schema_arg and infer.evaluate_expr(schema_arg, env)
+            if target_st and target_st.output and target_st.output.kind ~= "Unknown" then
+                local output_name = schema_aliases[target_st.output]
+                    or luacats.type_to_string(target_st.output, naming.create_context(module_name, decl.var_name), function(obj_t, c_ctx)
+                        return c_ctx:full_name()
+                    end)
+                if output_name and output_name ~= "unknown" then
+                    table.insert(results, {
+                        var_name = decl.var_name,
+                        schema_type = target_st,
+                        luacats = "---@type " .. output_name,
+                        pos = decl.pos,
+                    })
                 end
             end
         elseif decl.var_name then

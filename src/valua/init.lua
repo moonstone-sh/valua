@@ -42,7 +42,6 @@ v.pipe = require("valua.methods.pipe")
 v.parse = require("valua.methods.parse")
 v.safe_parse = require("valua.methods.safe_parse")
 v.is = require("valua.methods.is")
-v.alias = require("valua.methods.alias")
 v.assume = require("valua.methods.assume")
 
 return v

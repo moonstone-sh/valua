@@ -11,8 +11,26 @@ local function filter_tokens(tokens)
 end
 
 function parser.parse_tokens(tokens)
-    local toks = filter_tokens(tokens)
     local declarations = {}
+
+    -- Directives live in comments so they remain absent from the runtime Lua
+    -- program. Keep them before filtering normal syntax, then merge by source
+    -- position so a directive resolves only schemas declared before it.
+    for _, tok in ipairs(tokens) do
+        if tok.type == "comment" then
+            local alias_name, schema_name = tok.text:match("^%-%-%-@valua%-alias%s+(%S+)%s+([%a_][%w_]*)%s*$")
+            if alias_name and schema_name then
+                table.insert(declarations, {
+                    kind = "alias_directive",
+                    alias_name = alias_name,
+                    schema_name = schema_name,
+                    pos = tok.pos,
+                })
+            end
+        end
+    end
+
+    local toks = filter_tokens(tokens)
     local len = #toks
     local idx = 1
 
@@ -188,25 +206,14 @@ function parser.parse_tokens(tokens)
             else
                 idx = idx + 1
             end
-        elseif t and t.type == "identifier" then
-            local stmt_pos = t.pos
-            local start_idx = idx
-            local expr = parse_expr()
-            if expr and expr.type == "call" and expr.func == "alias" then
-                table.insert(declarations, {
-                    kind = "alias_statement",
-                    expr = expr,
-                    pos = stmt_pos,
-                })
-            else
-                if idx == start_idx then
-                    idx = idx + 1
-                end
-            end
         else
             idx = idx + 1
         end
     end
+
+    table.sort(declarations, function(a, b)
+        return a.pos < b.pos
+    end)
 
     return declarations
 end

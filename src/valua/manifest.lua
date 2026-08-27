@@ -41,7 +41,6 @@ return {
         parse = "valua.methods.parse",
         safe_parse = "valua.methods.safe_parse",
         is = "valua.methods.is",
-        alias = "valua.methods.alias",
         assume = "valua.methods.assume",
     },
 }
