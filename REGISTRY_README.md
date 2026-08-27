@@ -116,9 +116,9 @@ require("lspconfig").lua_ls.setup({
 
 ## 3. Architecture & LuaLS Type Inference
 
-Valua separates runtime validation from LuaLS tooling declarations. Schemas,
-actions, parsing, and `v.assume` are runtime APIs; `---@valua-*` comments are
-tooling-only and never add a runtime dependency.
+Valua uses ordinary Lua for its canonical tooling declarations when that gives
+better editor discoverability. `v.alias(name, schema)` is the primary form;
+`---@valua-alias Name Schema` is an equivalent optional zero-runtime shorthand.
 
 ```mermaid
 flowchart TD
@@ -140,7 +140,7 @@ flowchart TD
   class luals,parse,safe_parse effect
 ```
 
-- **In-Memory AST Lowering:** The language server plugin reads schema declarations and `---@valua-*` directives, then materializes hierarchical LuaCATS definitions matching the exact structure of your schemas.
+- **In-Memory AST Lowering:** The language server plugin reads schema declarations, `v.alias` statements, and optional `---@valua-*` directives, then materializes hierarchical LuaCATS definitions matching the exact structure of your schemas.
 - **Unified Result Model:** `v.safe_parse` yields `valua.SafeParseResult<O>`: success has `success = true` and `output = O`; failure has `success = false` and `issues = Issue[]`.
 - **Direct Extraction:** `v.parse` returns `O` non-nullable directly, throwing structured `ValidationError` on failure.
 
@@ -221,11 +221,12 @@ Available actions:
 | `v.parse(schema, input, opts?)` | `O` | Returns parsed value or throws a structured `ValidationError`. |
 | `v.is(schema, input)` | `boolean` | Fast boolean check. Aborts on first issue. |
 | `v.pipe(schema, ...actions)` | `BaseSchema<I, O>` | Composes a base schema with validation/transformation stages. |
+| `v.alias(name, schema)` | `BaseSchema<I, O>` | Declares a reusable LuaLS output alias and returns `schema` unchanged. |
 | `v.assume(schema, value)` | `O` | Unchecked type assertion returning `value` typed as schema output type without validation. |
 
 ---
 
-## 7. Static Typing Helpers (`@valua-alias` & `v.assume`)
+## 7. Static Typing Helpers (`v.alias` & `v.assume`)
 
 ```lua
 local UserSchema = v.object({
@@ -234,16 +235,18 @@ local UserSchema = v.object({
   profile = v.object({ bio = v.optional(v.string()) }),
 })
 
--- Tooling-only; not Lua code.
----@valua-alias User UserSchema
+-- Canonical, ordinary Lua form.
+v.alias("User", UserSchema)
 
 -- `v.safe_parse(UserSchema, value)` is synthesized as
 -- `valua.SafeParseResult<User>` by the LuaLS plugin.
 -- Inside `if result.success`, `result.output` is a non-optional User.
 
-`---@valua-alias Name Schema` declares a reusable LuaLS alias for a previously
-declared schema. It is a comment directive, has no validation semantics, and is
-always zero-cost at runtime.
+`v.alias(Name, Schema)` has no validation semantics: it returns the exact same
+schema and is deliberately written as a standalone declaration. A future
+Valua-aware optimizer can erase that statement trivially. If a codebase prefers
+comment-only metadata, `---@valua-alias Name Schema` is an equivalent optional
+tooling shorthand and has zero runtime cost.
 
 ---@param user User
 local function greet(user)

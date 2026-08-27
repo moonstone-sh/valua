@@ -72,7 +72,7 @@ local UserSchema = v.object({
     tags = v.array(v.string()),
 })
 
----@valua-alias User UserSchema
+v.alias("User", UserSchema)
 
 ---@param u User
 local function greet(u)

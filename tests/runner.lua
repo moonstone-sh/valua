@@ -50,6 +50,7 @@ local specs = {
     "tests.schemas.union_spec",
     "tests.actions.actions_spec",
     "tests.methods.methods_spec",
+    "tests.methods.alias_spec",
     "tests.methods.assume_spec",
     "tests.integration.integration_spec",
     "tests.integration.standard_schema_acceptance_spec",

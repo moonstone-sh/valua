@@ -2,7 +2,7 @@ manifest_version = 2
 
 [package]
 name = "valua"
-version = "0.2.0"
+version = "0.2.1"
 kind = "lib"
 description = "Deterministic schema declaration, runtime validation, and static type inference for Lua"
 

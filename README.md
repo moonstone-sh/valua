@@ -135,11 +135,11 @@ end
 
 ## 5. Architecture & Type System
 
-Valua separates runtime/value semantics from tooling-only declarations: schemas,
-actions, parsing, and `v.assume` are Lua runtime APIs; `---@valua-*` comments
-are consumed only by the LuaLS plugin and never enter the runtime dependency
-graph. Standard Schema interoperability and deep modular exports remain runtime
-concerns.
+Valua keeps value-producing work in Lua APIs and offers two equivalent ways to
+declare tooling metadata. `v.alias(name, schema)` is the canonical ordinary-Lua
+form because it works across editors; `---@valua-alias Name Schema` is an
+optional zero-runtime shorthand for tooling-first codebases. Standard Schema
+interoperability and deep modular exports remain runtime concerns.
 
 ```mermaid
 flowchart TD
@@ -161,8 +161,8 @@ flowchart TD
     class luals,parse,safe_parse effect
 ```
 
-- **Runtime Execution:** Pure Lua tables and closures with zero global state. `v.assume` remains an identity function because it participates in value flow.
-- **Tooling Directives:** `---@valua-alias User UserSchema` names a previously declared schema output without importing a runtime alias module or executing code.
+- **Runtime Execution:** Pure Lua tables and closures with zero global state. `v.assume` remains an identity function because it participates in value flow. `v.alias` returns its schema unchanged and has negligible runtime cost.
+- **Alias Declarations:** `v.alias("User", UserSchema)` is the canonical, discoverable form. A Valua-aware production optimizer may erase this standalone identity call; `---@valua-alias User UserSchema` is the equivalent comment shorthand.
 - **Type Propagation:** `v.safe_parse` produces `valua.SafeParseResult<O>`: success has `success = true` and `output = O`; failure has `success = false` and `issues = Issue[]`. `v.parse` returns non-nullable `O` directly.
 - **Zero-Copy Standard Schema:** Native issues already satisfy the `{ message, path = { { key } } }` contract, enabling zero-copy standard validation results.
 
@@ -201,11 +201,12 @@ local value = parse(schema, "hello")
 - `v.parse(schema, input, opts?)`: Parses and validates input, throwing `ValidationError` on failure.
 - `v.safe_parse(schema, input, opts?)`: Parses input returning `{ success = true, output = val }` or `{ success = false, issues = [...] }`.
 - `v.is(schema, input)`: Fast boolean check.
+- `v.alias(name, schema)`: Declares a reusable LuaLS output alias and returns `schema` unchanged.
 - `v.assume(schema, value)`: Unchecked type assertion returning `value` typed as the schema output type without runtime validation.
 
 ---
 
-## 8. Static Typing Helpers (`@valua-alias` & `v.assume`)
+## 8. Static Typing Helpers (`v.alias` & `v.assume`)
 
 Valua provides two explicit helpers to bridge runtime schemas with static annotations:
 
@@ -215,16 +216,18 @@ local UserSchema = v.object({
     age = v.integer(),
 })
 
--- 1. Reusable Type Alias (tooling-only; not Lua code)
----@valua-alias User UserSchema
+-- 1. Reusable Type Alias (canonical, ordinary Lua)
+v.alias("User", UserSchema)
 
 -- `v.safe_parse(UserSchema, value)` is synthesized as
 -- `valua.SafeParseResult<User>` by the LuaLS plugin.
 -- Inside `if result.success`, `result.output` is a non-optional User.
 
-`---@valua-alias Name Schema` declares a reusable LuaLS alias for a previously
-declared schema. It is a comment directive, has no validation semantics, and is
-always zero-cost at runtime.
+`v.alias(Name, Schema)` has no validation semantics: it returns the exact same
+schema and is deliberately written as a standalone declaration. A future
+Valua-aware optimizer can erase that statement trivially. If a codebase prefers
+comment-only metadata, `---@valua-alias Name Schema` is an equivalent optional
+tooling shorthand and has zero runtime cost.
 
 ---@param user User
 local function greet(user)

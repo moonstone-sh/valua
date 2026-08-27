@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1
+
+Restores `v.alias(name, schema)` as the canonical separate-statement alias
+declaration. It returns the schema unchanged at runtime and is recognized by
+the LuaLS plugin; `---@valua-alias Name Schema` remains an optional zero-runtime
+shorthand.
+
 ## 0.2.0
 
 Breaking change: `v.alias` is no longer a runtime or deep-import API. Use the

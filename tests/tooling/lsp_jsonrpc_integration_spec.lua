@@ -46,7 +46,7 @@ describe("LuaLS JSON-RPC - @valua-alias", function()
 
         local source = [[local v = require("valua")
 local UserSchema = v.object({ name = v.string() })
----@valua-alias User UserSchema
+v.alias("User", UserSchema)
 ---@param user User
 local function greet(user)
     return user.

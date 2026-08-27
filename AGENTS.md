@@ -9,9 +9,10 @@ stable structured issue paths. LuaLS generation must remain in memory and must
 not rewrite consumer files. Run the Lua test suite and a LuaLS fixture check for
 changes to schemas or `tooling/luals/`.
 
-Keep runtime/value semantics in Lua APIs and tooling-only semantics in
-`---@valua-*` directives. Do not reintroduce a runtime alias export or module:
-`---@valua-alias Name Schema` is parsed solely by the LuaLS plugin.
+Prefer ordinary Lua when it materially improves editor discoverability at
+negligible runtime cost. `v.alias("Name", Schema)` is Valua's canonical alias
+declaration and must remain a standalone identity call; `---@valua-alias Name
+Schema` is an optional zero-runtime shorthand parsed by the LuaLS plugin.
 
 Record constraints and unsupported behavior in [`LIMITATIONS.md`](LIMITATIONS.md)
 and put longer design material in `docs/`.

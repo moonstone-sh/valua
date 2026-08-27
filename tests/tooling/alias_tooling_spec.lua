@@ -1,11 +1,11 @@
 local plugin = require("valua.tooling.luals.plugin")
 
-describe("LuaLS Tooling - @valua-alias Static Analysis", function()
+describe("LuaLS Tooling - Alias Declarations", function()
     it("synthesizes alias for primitive string schema", function()
         local code = [[
             local v = require("valua")
             local NameSchema = v.string()
-            ---@valua-alias Name NameSchema
+            v.alias("Name", NameSchema)
         ]]
 
         local res = plugin.analyze_source(code, "test/main.lua")
@@ -27,7 +27,7 @@ describe("LuaLS Tooling - @valua-alias Static Analysis", function()
                 id = v.integer(),
                 name = v.string(),
             })
-            ---@valua-alias User UserSchema
+            v.alias("User", UserSchema)
         ]]
 
         local res = plugin.analyze_source(code, "test/main.lua")
@@ -40,14 +40,14 @@ describe("LuaLS Tooling - @valua-alias Static Analysis", function()
         assert_true(found_alias, "should emit ---@alias User test.main.UserSchema")
     end)
 
-    it("propagates a directive alias into safe_parse results", function()
+    it("propagates a runtime alias statement into safe_parse results", function()
         local code = [[
             local v = require("valua")
             local UserSchema = v.object({
                 name = v.string(),
                 age = v.integer(),
             })
-            ---@valua-alias User UserSchema
+            v.alias("User", UserSchema)
             local UsersSchema = v.array(UserSchema)
             local result = v.safe_parse(UserSchema, { name = "Max", age = 24 })
         ]]
@@ -69,12 +69,12 @@ describe("LuaLS Tooling - @valua-alias Static Analysis", function()
             end
         end
         assert_true(found_schema, "the schema declaration should remain independent")
-        assert_true(found_alias, "the directive should emit the named output type")
+        assert_true(found_alias, "the statement should emit the named output type")
         assert_true(found_array, "later combinators should retain the schema shape")
         assert_true(found_result, "safe_parse should retain the named output type")
     end)
 
-    it("does not treat runtime calls as tooling directives", function()
+    it("recognizes the canonical runtime statement", function()
         local code = [[
             local v = require("valua")
             local UserSchema = v.object({ name = v.string() })
@@ -82,9 +82,11 @@ describe("LuaLS Tooling - @valua-alias Static Analysis", function()
         ]]
 
         local res = plugin.analyze_source(code, "test/main.lua")
+        local found = false
         for _, r in ipairs(res) do
-            assert_false(r.var_name == "User", "runtime calls are not directives")
+            found = found or r.var_name == "User"
         end
+        assert_true(found, "runtime alias statements should be recognized")
     end)
 
     it("synthesizes alias for array schema", function()

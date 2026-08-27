@@ -8,8 +8,9 @@ inflate the package README:
 - testing and compatibility notes
 
 Valua's boundary is deliberate: runtime/value behavior belongs in `src/valua/`;
-static-only behavior belongs in `src/valua/tooling/` and is expressed in source
-through `---@valua-*` directives.
+tooling-only behavior belongs in `src/valua/tooling/`. Prefer ordinary Lua when
+it improves cross-editor discovery at negligible cost: `v.alias` is canonical,
+while `---@valua-alias` remains an optional shorthand.
 
 The current limitations are intentionally kept at the repository root in
 [`LIMITATIONS.md`](../LIMITATIONS.md). Keep [`REGISTRY_README.md`](../REGISTRY_README.md)
