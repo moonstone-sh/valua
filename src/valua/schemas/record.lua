@@ -28,33 +28,44 @@ local function record(key_schema, value_schema, custom_message)
 
             local out = {}
             local has_error = false
+            local child_path = dataset._path or {}
+            local segment = { kind = "record" }
 
             for k, v in pairs(dataset.value) do
                 -- Validate key
                 local key_ds = dataset_lib.create(k)
-                key_ds._path = path_lib.append(dataset._path, { kind = "record", key = k })
+                segment.key = k
+                child_path[#child_path + 1] = segment
+                key_ds._path = child_path
                 key_schema._run(key_ds, config)
-
-                -- Validate value
-                local val_ds = dataset_lib.create(v)
-                val_ds._path = path_lib.append(dataset._path, { kind = "record", key = k })
-                value_schema._run(val_ds, config)
 
                 if key_ds.issues then
                     has_error = true
                     for _, iss in ipairs(key_ds.issues) do
-                        if not iss.path then iss.path = key_ds._path end
+                        if iss.path == child_path or not iss.path then
+                            iss.path = path_lib.clone(child_path)
+                        end
                         dataset_lib.add_issue(dataset, iss)
                     end
                 end
+                child_path[#child_path] = nil
+
+                -- Validate value with the same temporary path segment.
+                local val_ds = dataset_lib.create(v)
+                child_path[#child_path + 1] = segment
+                val_ds._path = child_path
+                value_schema._run(val_ds, config)
 
                 if val_ds.issues then
                     has_error = true
                     for _, iss in ipairs(val_ds.issues) do
-                        if not iss.path then iss.path = val_ds._path end
+                        if iss.path == child_path or not iss.path then
+                            iss.path = path_lib.clone(child_path)
+                        end
                         dataset_lib.add_issue(dataset, iss)
                     end
                 end
+                child_path[#child_path] = nil
 
                 if not key_ds.issues and not val_ds.issues then
                     out[key_ds.value] = val_ds.value

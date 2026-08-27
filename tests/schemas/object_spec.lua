@@ -46,6 +46,21 @@ describe("Object & Structural Schemas", function()
         assert_true(#safe.issues > 0)
     end)
 
+    it("keeps sibling issue paths stable after traversal", function()
+        local Schema = v.object({ first = v.string(), second = v.string() })
+        local result = v.safe_parse(Schema, { first = 1, second = 2 })
+        assert_false(result.success)
+        assert_equal(#result.issues, 2)
+
+        local seen = {}
+        for _, issue in ipairs(result.issues) do
+            assert_equal(#issue.path, 1)
+            seen[issue.path[1].key] = issue.path[1].key
+        end
+        assert_equal(seen.first, "first")
+        assert_equal(seen.second, "second")
+    end)
+
     it("array schema", function()
         local arr_s = v.array(v.integer())
         assert_true(v.is(arr_s, { 1, 2, 3 }))

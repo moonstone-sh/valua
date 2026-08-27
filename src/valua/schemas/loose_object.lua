@@ -27,6 +27,8 @@ local function loose_object(entries, custom_message)
 
             local out = {}
             local has_error = false
+            local child_path = dataset._path or {}
+            local segment = { kind = "object" }
 
             -- Copy all initial keys from input first (loose behavior)
             for k, v in pairs(dataset.value) do
@@ -36,21 +38,25 @@ local function loose_object(entries, custom_message)
             for k, sch in pairs(entries) do
                 local val = dataset.value[k]
                 local child_ds = dataset_lib.create(val)
-                child_ds._path = path_lib.append(dataset._path, { kind = "object", key = k })
+                segment.key = k
+                child_path[#child_path + 1] = segment
+                child_ds._path = child_path
 
                 sch._run(child_ds, config)
 
                 if child_ds.issues then
                     has_error = true
                     for _, iss in ipairs(child_ds.issues) do
-                        if not iss.path then
-                            iss.path = child_ds._path
+                        if iss.path == child_path or not iss.path then
+                            iss.path = path_lib.clone(child_path)
                         end
                         dataset_lib.add_issue(dataset, iss)
                     end
                 else
                     out[k] = child_ds.value
                 end
+
+                child_path[#child_path] = nil
 
                 if has_error and config and config.abort_early then
                     break

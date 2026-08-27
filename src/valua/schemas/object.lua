@@ -30,19 +30,32 @@ local function object(entries, custom_message)
 
             local out = {}
             local has_error = false
+            -- A path is observable only on failure. Reuse one mutable traversal
+            -- stack for all children, then snapshot it while propagating an
+            -- issue. This removes one path-table clone and one segment table per
+            -- successful field without changing the public issue shape.
+            local child_path = dataset._path or {}
+            local segment = { kind = "object" }
 
             for k, sch in pairs(entries) do
                 local val = dataset.value[k]
                 local child_ds = dataset_lib.create(val)
-                child_ds._path = path_lib.append(dataset._path, { kind = "object", key = k })
+                segment.key = k
+                child_path[#child_path + 1] = segment
+                child_ds._path = child_path
 
                 sch._run(child_ds, config)
 
                 if child_ds.issues then
                     has_error = true
                     for _, iss in ipairs(child_ds.issues) do
-                        if not iss.path then
-                            iss.path = child_ds._path
+                        -- Child schemas may retain the mutable traversal stack.
+                        -- Snapshot before popping it so callers always receive a
+                        -- stable structured path.
+                        if iss.path == child_path then
+                            iss.path = path_lib.clone(child_path)
+                        elseif not iss.path then
+                            iss.path = path_lib.clone(child_path)
                         end
                         dataset_lib.add_issue(dataset, iss)
                     end
@@ -51,6 +64,8 @@ local function object(entries, custom_message)
                         out[k] = child_ds.value
                     end
                 end
+
+                child_path[#child_path] = nil
 
                 if has_error and config and config.abort_early then
                     break
