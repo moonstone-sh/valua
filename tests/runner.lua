@@ -68,7 +68,6 @@ local specs = {
     "tests.methods.assume_spec",
     "tests.integration.integration_spec",
     "tests.integration.standard_schema_acceptance_spec",
-    "tests.cli.init_spec",
     "tests.tooling.tooling_spec",
     "tests.tooling.capabilities_spec",
     "tests.tooling.naming_spec",
@@ -97,6 +96,15 @@ local specs = {
     "tests.standard_schema.deep_import_spec",
     "tests.standard_schema.native_equivalence_spec",
 }
+
+-- The runtime-compatibility matrix deliberately tests Valua without Moonstone
+-- development dependencies. Alter-backed CLI integration belongs to the
+-- Moonstone-aware suite, where both packages are installed.
+local has_alter = pcall(require, "alter")
+local has_alter_jsonc = pcall(require, "alter_jsonc")
+if has_alter and has_alter_jsonc then
+    table.insert(specs, 10, "tests.cli.init_spec")
+end
 
 for _, spec_mod in ipairs(specs) do
     require(spec_mod)

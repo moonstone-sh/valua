@@ -17,7 +17,7 @@ Add Valua to your Moonstone project:
 
 ```sh
 moon add moonstone/valua
-moon exec valua -- init
+moon exec valua -- init --config ./.luarc.json --yes
 ```
 
 ### Define a Schema and Validate
@@ -64,11 +64,19 @@ end
 
 Valua includes a first-class language server plugin for [LuaLS](https://github.com/LuaLS/lua-language-server). The plugin analyzes schema definitions in memory and synthesizes exact LuaCATS `---@class` structures and `valua.BaseSchema<I, O>` annotations without modifying your source code on disk.
 
-> **Note on Environment Paths:** The examples below reference a Moonstone project using Lua 5.4 (`.moonstone/env/share/lua/5.4/`). If your project uses Lua 5.1, LuaJIT, or Lua 5.3, replace `5.4` with your active interpreter version.
+### Project-level `.luarc.json` (Recommended)
 
-### Option 1: Project-level `.luarc.json` (Recommended)
+After installing Valua, let its CLI update the project configuration:
 
-When Valua is installed via Moonstone (`moon add moonstone/valua`), configure `.luarc.json` in your project root:
+```sh
+moon exec valua -- init --config ./.luarc.json --yes
+```
+
+It reads the active Moonstone runtime, preserves JSONC comments and existing plugins, migrates a legacy string plugin setting to an array when needed, and is idempotent. Omit `--config` to use the project-root `.luarc.json`.
+
+### Manual `.luarc.json` configuration
+
+If you configure LuaLS yourself, both the LuaLS runtime version and the Moonstone Lua directory must match your selected interpreter ABI/version. The values below are for Lua 5.4 only. For another runtime, change **both** `runtime.version` and every `share/lua/5.4` path to the corresponding values from your project's Moonstone environment. LuaJIT in particular uses its own LuaLS runtime label and ABI directory; prefer the command above if unsure.
 
 ```json
 {
