@@ -2,10 +2,10 @@
 
 Valua is a deterministic schema declaration, runtime validation, and static type inference library for Lua and Moonstone projects. It combines composable runtime validation with full LuaLS language server autocompletion, concrete schema output inference, and Standard Schema v1 interoperability.
 
-The package is a portable source artifact: one Valua release supports Lua
-5.1–5.5 and LuaJIT 2.1. Moonstone locks the exact source and runtime profile in
-each consuming project; users do not choose a separate Valua package version
-per ABI. See the repository's [compatibility contract](docs/COMPATIBILITY.md).
+The package is a portable Lua executable artifact: one Valua release supports
+Lua 5.1–5.5 and LuaJIT 2.1. Moonstone locks its exact artifact and runtime
+profile in each consuming project; users do not choose a separate Valua package
+version per ABI. See the repository's [compatibility contract](docs/COMPATIBILITY.md).
 
 ---
 
@@ -17,6 +17,7 @@ Add Valua to your Moonstone project:
 
 ```sh
 moon add moonstone/valua
+moon exec valua -- init
 ```
 
 ### Define a Schema and Validate
@@ -73,7 +74,9 @@ When Valua is installed via Moonstone (`moon add moonstone/valua`), configure `.
 {
   "runtime": {
     "version": "Lua 5.4",
-    "plugin": ".moonstone/env/share/lua/5.4/valua/tooling/luals/plugin.lua"
+    "plugin": [
+      ".moonstone/env/share/lua/5.4/valua/tooling/luals/plugin.lua"
+    ]
   },
   "workspace": {
     "library": [

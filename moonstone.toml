@@ -2,8 +2,8 @@ manifest_version = 2
 
 [package]
 name = "valua"
-version = "0.2.2"
-kind = "lib"
+version = "0.2.3"
+kind = "bin"
 description = "Deterministic schema declaration, runtime validation, and static type inference for Lua"
 
 [interpreter]
@@ -14,6 +14,16 @@ abi = "5.4"
 [scripts]
 test = "lua tests/runner.lua"
 package = "moon exec ballad -- play partiture.lua"
+
+[[dependencies]]
+name = "moonstone/alter"
+constraint = "^0.1.0"
+role = "runtime"
+
+[[dependencies]]
+name = "moonstone/alter-jsonc"
+constraint = "^0.1.0"
+role = "runtime"
 
 [[dependencies]]
 name = "moonstone/ballad"

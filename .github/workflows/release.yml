@@ -49,11 +49,13 @@ jobs:
         run: moon sync
       - name: Export tagged project
         run: moon exec ballad play partiture.lua
-      - name: Verify portable source artifact
+      - name: Verify portable executable artifact
         run: |
           descriptor=dist/registry/valua/package.toml
-          test "$(sed -n 's/^target = "\(.*\)"$/\1/p' "$descriptor" | head -1)" = source
-          ! sed -n '/^\[\[artifacts\]\]/,/^\[/p' "$descriptor" | grep -q '^lua_abi ='
+          grep -q '^kind = "bin"$' "$descriptor"
+          grep -q '^target = "any"$' "$descriptor"
+          grep -q '^kind = "bin_lua"$' "$descriptor"
+          grep -q '^name = "valua"$' "$descriptor"
       - name: Verify tag version
         env:
           RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag || github.ref_name }}

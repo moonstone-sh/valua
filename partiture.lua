@@ -5,33 +5,22 @@ return ballad.partiture(function(p)
 	local convention = ballad.conventions
 	local project = moonstone.project({ root = "." })
 
-	local source_artifact = moonstone.registry.source_package(project, {
+	local layout = p:use(ballad.plugins.layout)
+	local app = layout.exec(project, {
+		name = "valua",
+		bin = "valua",
+		entry = "src/main.lua",
+		interpreter = "lua",
+		include = { "src/**" },
+	})
+
+	local source_artifact = moonstone.registry.package(app, {
 		name = project.registry_name or "moonstone/valua",
-		kind = "lib",
 		readme = "REGISTRY_README.md",
-		include = {
-			"src/**",
-			"docs/**",
-			"README.md",
-			"REGISTRY_README.md",
-			"LICENSE",
-		},
-		exclude = {
-			"tests/**",
-			"**/.moonstone",
-			"**/.moonstone/**",
-			"**/.ballad",
-			"**/.ballad/**",
-		},
-		collect = {
-			lua_modules = {
-				convention.tree("src", {
-					prefix = "valua",
-					strip_prefix = "valua/",
-					root_module = "valua.lua",
-				}),
-			},
-		},
+		version = project.version,
+		target = "any",
+		runtime = project.runtime_spec or "moonstone/lua@5.4",
+		lua_abi = project.lua_abi or "5.4",
 	})
 
 	p.sink.artifact(source_artifact, {

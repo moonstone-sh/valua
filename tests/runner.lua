@@ -68,6 +68,7 @@ local specs = {
     "tests.methods.assume_spec",
     "tests.integration.integration_spec",
     "tests.integration.standard_schema_acceptance_spec",
+    "tests.cli.init_spec",
     "tests.tooling.tooling_spec",
     "tests.tooling.capabilities_spec",
     "tests.tooling.naming_spec",
