@@ -37,12 +37,22 @@ v.pattern = require("valua.actions.pattern")
 v.starts_with = require("valua.actions.starts_with")
 v.ends_with = require("valua.actions.ends_with")
 
--- Methods
 v.pipe = require("valua.methods.pipe")
 v.parse = require("valua.methods.parse")
 v.safe_parse = require("valua.methods.safe_parse")
 v.is = require("valua.methods.is")
 v.alias = require("valua.methods.alias")
 v.assume = require("valua.methods.assume")
+v.reflect = require("valua.methods.reflect")
+v.inspect = require("valua.methods.inspect")
+v.walk = require("valua.methods.walk")
+v.annotate = require("valua.methods.annotate")
+v.meta = v.annotate
+v.describe = require("valua.methods.describe")
+v.title = require("valua.core.metadata").title
+v.deprecated = require("valua.core.metadata").deprecated
+v.examples = require("valua.core.metadata").examples
+v.to_json_schema = require("valua.methods.to_json_schema")
+v.json_schema = require("valua.core.json_schema")
 
 return v

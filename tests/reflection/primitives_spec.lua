@@ -1,0 +1,57 @@
+local v = require("valua")
+
+describe("Reflection - Primitives", function()
+    it("reflects string schema", function()
+        local s = v.string("custom msg")
+        local node = v.inspect(s)
+        assert_equal(node.kind, "string")
+        assert_equal(node.message, "custom msg")
+
+        local g = v.reflect(s)
+        assert_equal(g.format, "valua.schema-graph.v1")
+        assert_equal(g.root, "n1")
+        assert_equal(g.nodes.n1.kind, "string")
+    end)
+
+    it("reflects number and integer schemas", function()
+        local num = v.inspect(v.number())
+        assert_equal(num.kind, "number")
+
+        local int = v.inspect(v.integer())
+        assert_equal(int.kind, "integer")
+    end)
+
+    it("reflects boolean and nil schemas", function()
+        local b = v.inspect(v.boolean())
+        assert_equal(b.kind, "boolean")
+
+        local n = v.inspect(v.nil_())
+        assert_equal(n.kind, "nil")
+    end)
+
+    it("reflects any, unknown, never schemas", function()
+        assert_equal(v.inspect(v.any()).kind, "any")
+        assert_equal(v.inspect(v.unknown()).kind, "unknown")
+        assert_equal(v.inspect(v.never()).kind, "never")
+    end)
+
+    it("reflects literal schema with value", function()
+        local lit = v.inspect(v.literal("admin"))
+        assert_equal(lit.kind, "literal")
+        assert_equal(lit.value, "admin")
+
+        local lit_num = v.inspect(v.literal(42))
+        assert_equal(lit_num.kind, "literal")
+        assert_equal(lit_num.value, 42)
+    end)
+
+    it("reflects picklist schema with options", function()
+        local pl = v.inspect(v.picklist({ "dev", "prod", "test" }))
+        assert_equal(pl.kind, "picklist")
+        assert_true(type(pl.options) == "table")
+        assert_equal(#pl.options, 3)
+        assert_equal(pl.options[1], "dev")
+        assert_equal(pl.options[2], "prod")
+        assert_equal(pl.options[3], "test")
+    end)
+end)

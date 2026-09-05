@@ -43,5 +43,12 @@ return {
         is = "valua.methods.is",
         alias = "valua.methods.alias",
         assume = "valua.methods.assume",
+        reflect = "valua.methods.reflect",
+        inspect = "valua.methods.inspect",
+        walk = "valua.methods.walk",
+        annotate = "valua.methods.annotate",
+        meta = "valua.methods.annotate",
+        describe = "valua.methods.describe",
+        to_json_schema = "valua.methods.to_json_schema",
     },
 }

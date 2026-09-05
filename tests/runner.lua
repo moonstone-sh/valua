@@ -95,6 +95,16 @@ local specs = {
     "tests.standard_schema.library_options_spec",
     "tests.standard_schema.deep_import_spec",
     "tests.standard_schema.native_equivalence_spec",
+    "tests.reflection.primitives_spec",
+    "tests.reflection.composition_spec",
+    "tests.reflection.constraints_spec",
+    "tests.reflection.reuse_cycles_spec",
+    "tests.reflection.metadata_spec",
+    "tests.reflection.json_schema_spec",
+    "tests.reflection.cadence_spike_spec",
+    "tests.reflection.meteorite_spike_spec",
+    "tests.reflection.visitor_spec",
+    "tests.reflection.hardened_contracts_spec",
 }
 
 -- The runtime-compatibility matrix deliberately tests Valua without Moonstone
