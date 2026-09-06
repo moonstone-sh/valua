@@ -1,40 +1,64 @@
+local c = require("clingy")
+local v = require("valua")
 local init = require("valua.cli.init")
+
+local app
+app = c.create({
+    name = "valua",
+    version = "0.2.6",
+    description = "Deterministic schema declaration, runtime validation, and static type inference for Lua",
+
+    c.root(c.node({
+        c.inherit(
+            c.flag("-h", "--help")
+        ),
+
+        c.run(function(ctx)
+            io.stdout:write(app:help() .. "\n")
+            return 0
+        end),
+
+        init = c.node({
+            c.option("-c", "--config", v.string()),
+            c.flag("-y", "--yes"),
+
+            c.run(function(ctx)
+                if ctx.args.help then
+                    io.stdout:write(app:help("init") .. "\n")
+                    return 0
+                end
+                local opts = {
+                    config = ctx.args.config,
+                    yes = ctx.args.yes,
+                }
+                local result, err = init.run(opts)
+                if not result then
+                    if err ~= "cancelled" then
+                        ctx:log("error", "valua init: " .. tostring(err and err.message or err))
+                    end
+                    return err == "cancelled" and 0 or 1
+                end
+                if result.changed then
+                    ctx:log("info", "Configured LuaLS for Valua.")
+                else
+                    ctx:log("info", "LuaLS is already configured for Valua.")
+                end
+                return 0
+            end),
+        }, {
+            description = "Configure LuaLS for Valua",
+        }),
+    })),
+})
 
 local cli = {}
 
 function cli.run(argv)
-    argv = argv or {}
-    local command = argv[1]
-    if command ~= "init" then
-        io.stderr:write("Usage: valua init [--config PATH] [--yes]\n")
-        return 2
-    end
-    local opts = {}
-    local i = 2
-    while i <= #argv do
-        local arg = argv[i]
-        if arg == "--yes" then
-            opts.yes = true
-        elseif arg == "--config" then
-            i = i + 1
-            opts.config = argv[i]
-            if not opts.config then
-                io.stderr:write("valua init: --config requires a path\n")
-                return 2
-            end
-        else
-            io.stderr:write("valua init: unknown option " .. tostring(arg) .. "\n")
-            return 2
-        end
-        i = i + 1
-    end
-    local result, err = init.run(opts)
-    if not result then
-        if err ~= "cancelled" then io.stderr:write("valua init: " .. tostring(err and err.message or err) .. "\n") end
-        return err == "cancelled" and 0 or 1
-    end
-    io.stdout:write(result.changed and "Configured LuaLS for Valua.\n" or "LuaLS is already configured for Valua.\n")
-    return 0
+    return app:run(argv)
 end
 
+cli.app = app
+
 return cli
+
+

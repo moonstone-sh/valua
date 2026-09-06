@@ -1,6 +1,11 @@
 # Changelog
 
+## 0.2.6
+
+Migrated CLI argument routing and command dispatch to `moonstone/clingy`, integrating declarative options, flags, and help formatting.
+
 ## 0.2.1
+
 
 Restores `v.alias(name, schema)` as the canonical separate-statement alias
 declaration. It returns the schema unchanged at runtime and is recognized by

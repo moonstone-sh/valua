@@ -50,4 +50,20 @@ describe("Valua Alter-backed LuaLS initialization", function()
         assert_false(io.open(root .. "/.luarc.json", "rb") ~= nil)
         os.execute('rm -rf "' .. root .. '"')
     end)
+
+    it("runs via Clingy CLI interface", function()
+        local cli = require("valua.cli")
+        local root = os.tmpname()
+        os.remove(root)
+        assert(os.execute('mkdir -p "' .. root .. '/.moonstone/env"'))
+        write(root .. "/moonstone.toml", "[package]\nname = \"fixture\"\n")
+        write(root .. "/.moonstone/env/env.toml", "[runtime]\nname = \"lua\"\nversion = \"5.4.9\"\nabi = \"lua54\"\n")
+
+        local target = root .. "/.luarc.json"
+        local code = cli.run({ "init", "--config", target, "--yes" })
+        assert_equal(code, 0)
+        assert_true(read(target):find("valua/tooling/luals/plugin.lua", 1, true) ~= nil)
+        os.execute('rm -rf "' .. root .. '"')
+    end)
 end)
+
