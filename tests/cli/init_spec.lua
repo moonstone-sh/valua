@@ -51,8 +51,9 @@ describe("Valua Alter-backed LuaLS initialization", function()
         os.execute('rm -rf "' .. root .. '"')
     end)
 
-    it("runs via Clingy CLI interface", function()
+    it("runs via CLI interface", function()
         local cli = require("valua.cli")
+
         local root = os.tmpname()
         os.remove(root)
         assert(os.execute('mkdir -p "' .. root .. '/.moonstone/env"'))

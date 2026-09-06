@@ -16,12 +16,6 @@ abi = "5.4"
 test = "lua tests/runner.lua"
 package = "moon exec ballad -- play partiture.lua"
 
-[[registries]]
-name = "test"
-resolver = "moonstone"
-path = "../test-reg"
-priority = 0
-
 [[dependencies]]
 name = "moonstone/ballad"
 constraint = "^0.3.5"
@@ -37,9 +31,4 @@ name = "moonstone/alter-jsonc"
 constraint = "^0.1.0"
 role = "runtime"
 
-[[dependencies]]
-name = "moonstone/clingy"
-constraint = "^0.1.0"
-registry = "test"
-role = "runtime"
 
