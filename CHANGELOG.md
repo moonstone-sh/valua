@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.7
+
+- Route the `valua init` CLI through Clingy v0.2 while preserving help and usage behavior.
+
 ## 0.2.6
 
 Migrated CLI argument routing and command dispatch to `moonstone/clingy`, integrating declarative options, flags, and help formatting.

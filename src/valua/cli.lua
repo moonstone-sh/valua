@@ -1,87 +1,91 @@
+local clingy = require("clingy")
 local init = require("valua.cli.init")
 
 local cli = {}
+local app
 
-local function print_help()
-    io.stdout:write([[
-valua - Deterministic schema declaration, runtime validation, and static type inference for Lua
-
-Usage:
-  valua [OPTIONS] [COMMAND]
-
-Options:
-  -h, --help            Show help information
-
-Commands:
-  init                  Configure LuaLS for Valua
-
-]])
+local function write_help(path)
+    io.stdout:write(app:help(path) .. "\n")
 end
 
-local function print_init_help()
-    io.stdout:write([[
-valua init - Configure LuaLS for Valua
+local function run_init(ctx)
+    local result, err = init.run({
+        config = ctx.args.config,
+        yes = ctx.args.yes,
+    })
 
-Usage:
-  valua init [OPTIONS]
+    if not result then
+        if err ~= "cancelled" then
+            io.stderr:write("valua init: " .. tostring(err and err.message or err) .. "\n")
+            ctx:fail(err, 1)
+        end
+        return
+    end
 
-Options:
-  -c, --config <path>   Path to .luarc.json configuration file
-  -y, --yes             Automatically accept changes without prompting
-  -h, --help            Show help information
+    io.stdout:write(result.changed and "Configured LuaLS for Valua.\n" or "LuaLS is already configured for Valua.\n")
+end
 
-]])
+app = clingy.create({
+    name = "valua",
+    description = "Deterministic schema declaration, runtime validation, and static type inference for Lua",
+
+    clingy.root(clingy.node({
+        -- Help is one inherited binding, so every command reads the canonical
+        -- `help` key without creating a colliding command-local binding.
+        clingy.inherit(clingy.flag("help", "-h", "--help", {
+            description = "Show help information",
+        })),
+        clingy.run(function()
+            write_help()
+        end),
+
+        init = clingy.node({
+            -- Detached values deliberately match the pre-Clingy CLI grammar.
+            clingy.separator(" ", clingy.option("config", "-c", "--config")),
+            clingy.flag("yes", "-y", "--yes", {
+                description = "Automatically accept changes without prompting",
+            }),
+            clingy.run(function(ctx)
+                if ctx.args.help then
+                    write_help("init")
+                    return
+                end
+                run_init(ctx)
+            end),
+        }, {
+            description = "Configure LuaLS for Valua",
+        }),
+    })),
+})
+
+local function clean_parse_error(err)
+    local message = tostring(err)
+    return message:match("^.-:%d+: (.*)$") or message
 end
 
 function cli.run(argv)
     argv = argv or {}
-    local command = argv[1]
 
-    if not command or command == "--help" or command == "-h" or command == "help" then
-        print_help()
+    -- `help` was an established root alias before Clingy. It is intentionally
+    -- a bootstrap alias rather than a visible command in the declared graph.
+    if argv[1] == "help" then
+        write_help()
         return 0
     end
 
-    if command ~= "init" then
-        io.stderr:write("Usage: valua init [--config PATH] [--yes]\n")
+    -- Parsing is owned by Clingy's declared graph. Preflight parsing keeps the
+    -- legacy usage-error status (2) while app:run owns routing and execution.
+    local parsed, parse_err = pcall(app.parse, app, argv)
+    if not parsed then
+        if argv[1] ~= "init" then
+            io.stderr:write("Usage: valua init [--config PATH] [--yes]\n")
+        else
+            io.stderr:write("valua init: " .. clean_parse_error(parse_err) .. "\n")
+        end
         return 2
     end
 
-    local opts = {}
-    local i = 2
-    while i <= #argv do
-        local arg = argv[i]
-        if arg == "--help" or arg == "-h" then
-            print_init_help()
-            return 0
-        elseif arg == "--yes" or arg == "-y" then
-            opts.yes = true
-        elseif arg == "--config" or arg == "-c" then
-            i = i + 1
-            opts.config = argv[i]
-            if not opts.config then
-                io.stderr:write("valua init: --config requires a path\n")
-                return 2
-            end
-        else
-            io.stderr:write("valua init: unknown option " .. tostring(arg) .. "\n")
-            return 2
-        end
-        i = i + 1
-    end
-
-    local result, err = init.run(opts)
-    if not result then
-        if err ~= "cancelled" then
-            io.stderr:write("valua init: " .. tostring(err and err.message or err) .. "\n")
-        end
-        return err == "cancelled" and 0 or 1
-    end
-    io.stdout:write(result.changed and "Configured LuaLS for Valua.\n" or "LuaLS is already configured for Valua.\n")
-    return 0
+    return app:run(argv, { presentation = clingy.null_host() })
 end
 
 return cli
-
-
-

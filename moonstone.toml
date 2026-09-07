@@ -2,7 +2,7 @@ manifest_version = 2
 
 [package]
 name = "valua"
-version = "0.2.6"
+version = "0.2.7"
 kind = "bin"
 description = "Deterministic schema declaration, runtime validation, and static type inference for Lua"
 
@@ -31,4 +31,8 @@ name = "moonstone/alter-jsonc"
 constraint = "^0.1.0"
 role = "runtime"
 
+[[dependencies]]
+name = "moonstone/clingy"
+constraint = "^0.2.0"
+role = "runtime"
 
