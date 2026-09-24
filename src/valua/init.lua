@@ -54,5 +54,9 @@ v.deprecated = require("valua.core.metadata").deprecated
 v.examples = require("valua.core.metadata").examples
 v.to_json_schema = require("valua.methods.to_json_schema")
 v.json_schema = require("valua.core.json_schema")
+v.contracts = require("valua.contracts").bundle
+v.export = require("valua.contracts").export
+v.contract_typescript = require("valua.contracts.typescript")
+v.contract_json_schema = require("valua.contracts.json_schema")
 
 return v

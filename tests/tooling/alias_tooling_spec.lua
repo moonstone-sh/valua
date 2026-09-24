@@ -107,6 +107,27 @@ describe("LuaLS Tooling - Alias Declarations", function()
         assert_true(found_alias, "should emit ---@alias Users test.main.UserSchema[]")
     end)
 
+    it("treats a zero-runtime contract declaration as an alias", function()
+        local code = [[
+            local v = require("valua")
+            local TodoSchema = v.object({ id = v.integer(), title = v.string() })
+            ---@valua-contract Todo TodoSchema
+            local parsed = v.safe_parse(TodoSchema, { id = 1, title = "ship" })
+        ]]
+
+        local res = plugin.analyze_source(code, "test/main.lua")
+        local found_alias, found_result = false, false
+        for _, r in ipairs(res) do
+            if r.var_name == "Todo" and r.luacats:find("---@alias Todo test%.main%.TodoSchema") then
+                found_alias = true
+            elseif r.var_name == "parsed" and r.luacats:find("valua%.SafeParseResult<Todo>") then
+                found_result = true
+            end
+        end
+        assert_true(found_alias, "contract directive should emit a named alias")
+        assert_true(found_result, "later parsing should retain the contract type")
+    end)
+
     it("synthesizes alias for picklist schema", function()
         local code = [[
             local v = require("valua")

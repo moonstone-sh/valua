@@ -19,6 +19,9 @@ function parser.parse_tokens(tokens)
     for _, tok in ipairs(tokens) do
         if tok.type == "comment" then
             local alias_name, schema_name = tok.text:match("^%-%-%-@valua%-alias%s+(%S+)%s+([%a_][%w_]*)%s*$")
+            if not alias_name then
+                alias_name, schema_name = tok.text:match("^%-%-%-@valua%-contract%s+(%S+)%s+([%a_][%w_]*)%s*$")
+            end
             if alias_name and schema_name then
                 table.insert(declarations, {
                     kind = "alias_directive",

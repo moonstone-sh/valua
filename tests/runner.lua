@@ -105,6 +105,8 @@ local specs = {
     "tests.reflection.meteorite_spike_spec",
     "tests.reflection.visitor_spec",
     "tests.reflection.hardened_contracts_spec",
+    "tests.contracts.typescript_spec",
+    "tests.contracts.directives_spec",
 }
 
 -- The runtime-compatibility matrix deliberately tests Valua without Moonstone

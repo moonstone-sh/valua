@@ -14,7 +14,7 @@ local json_schema = {}
 ---@param ref_counts table<string, integer>
 ---@param active_converting table<string, boolean>
 ---@return table
-local function convert_node(node_id, graph, defs, ref_counts, active_converting)
+local function convert_node(node_id, graph, defs, ref_counts, active_converting, options)
     local node = graph.nodes[node_id]
     if not node then return {} end
 
@@ -33,7 +33,7 @@ local function convert_node(node_id, graph, defs, ref_counts, active_converting)
         if not defs[node_id] then
             defs[node_id] = { ["$comment"] = "pending" }
             active_converting[node_id] = true
-            local def_schema = convert_node_body(node, graph, defs, ref_counts, active_converting)
+            local def_schema = convert_node_body(node, graph, defs, ref_counts, active_converting, options)
             active_converting[node_id] = nil
             for k in pairs(defs[node_id]) do defs[node_id][k] = nil end
             for k, v in pairs(def_schema) do defs[node_id][k] = v end
@@ -42,12 +42,12 @@ local function convert_node(node_id, graph, defs, ref_counts, active_converting)
     end
 
     active_converting[node_id] = true
-    local res = convert_node_body(node, graph, defs, ref_counts, active_converting)
+    local res = convert_node_body(node, graph, defs, ref_counts, active_converting, options)
     active_converting[node_id] = nil
     return res
 end
 
-function convert_node_body(node, graph, defs, ref_counts, active_converting)
+function convert_node_body(node, graph, defs, ref_counts, active_converting, options)
     local out = {}
     local kind = node.kind
 
@@ -78,7 +78,17 @@ function convert_node_body(node, graph, defs, ref_counts, active_converting)
 
         for _, k in ipairs(node.entry_order or {}) do
             local entry = node.entries[k]
-            local child_schema = convert_node(entry.node, graph, defs, ref_counts, active_converting)
+            local child_node_id = entry.node
+            -- Lua represents an absent optional field as nil. At a JSON
+            -- boundary that is distinct from a present JSON null, so contract
+            -- callers may opt into an absent-only field projection.
+            if options.optional_fields == "absent" and entry.optional then
+                local child_node = graph.nodes[child_node_id]
+                if child_node and child_node.kind == "optional" and child_node.wrapped then
+                    child_node_id = child_node.wrapped
+                end
+            end
+            local child_schema = convert_node(child_node_id, graph, defs, ref_counts, active_converting, options)
 
             -- Merge edge-level metadata if present
             if entry.metadata then
@@ -111,14 +121,14 @@ function convert_node_body(node, graph, defs, ref_counts, active_converting)
     elseif kind == "array" then
         out.type = "array"
         if node.element then
-            out.items = convert_node(node.element, graph, defs, ref_counts, active_converting)
+            out.items = convert_node(node.element, graph, defs, ref_counts, active_converting, options)
         end
 
     elseif kind == "tuple" then
         out.type = "array"
         local prefix = {}
         for i, el_id in ipairs(node.elements or {}) do
-            prefix[i] = convert_node(el_id, graph, defs, ref_counts, active_converting)
+            prefix[i] = convert_node(el_id, graph, defs, ref_counts, active_converting, options)
         end
         out.prefixItems = prefix
         out.items = false
@@ -126,19 +136,19 @@ function convert_node_body(node, graph, defs, ref_counts, active_converting)
     elseif kind == "record" then
         out.type = "object"
         if node.value then
-            out.additionalProperties = convert_node(node.value, graph, defs, ref_counts, active_converting)
+            out.additionalProperties = convert_node(node.value, graph, defs, ref_counts, active_converting, options)
         end
 
     elseif kind == "union" then
         local any_of = {}
         for i, v_id in ipairs(node.variants or {}) do
-            any_of[i] = convert_node(v_id, graph, defs, ref_counts, active_converting)
+            any_of[i] = convert_node(v_id, graph, defs, ref_counts, active_converting, options)
         end
         out.anyOf = any_of
 
     elseif kind == "optional" then
         if node.wrapped then
-            local wrapped_schema = convert_node(node.wrapped, graph, defs, ref_counts, active_converting)
+            local wrapped_schema = convert_node(node.wrapped, graph, defs, ref_counts, active_converting, options)
             out.anyOf = {
                 wrapped_schema,
                 { type = "null" },
@@ -147,7 +157,7 @@ function convert_node_body(node, graph, defs, ref_counts, active_converting)
 
     elseif kind == "lazy" then
         if node.wrapped then
-            return convert_node(node.wrapped, graph, defs, ref_counts, active_converting)
+            return convert_node(node.wrapped, graph, defs, ref_counts, active_converting, options)
         else
             out["x-valua-lazy-opaque"] = true
         end
@@ -155,7 +165,7 @@ function convert_node_body(node, graph, defs, ref_counts, active_converting)
     elseif kind == "pipe" then
         local base_schema = {}
         if node.base then
-            base_schema = convert_node(node.base, graph, defs, ref_counts, active_converting)
+            base_schema = convert_node(node.base, graph, defs, ref_counts, active_converting, options)
         end
         for k, v in pairs(base_schema) do out[k] = v end
 
@@ -268,7 +278,7 @@ function json_schema.from_schema(schema, options)
 
     local defs = {}
     local active_converting = {}
-    local root_schema = convert_node(graph.root, graph, defs, ref_counts, active_converting)
+    local root_schema = convert_node(graph.root, graph, defs, ref_counts, active_converting, options)
 
     -- Attach $defs if any shared definitions were generated
     local def_count = 0

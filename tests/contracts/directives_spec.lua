@@ -1,0 +1,25 @@
+local parse = require("valua.contracts.directives").parse
+local contracts = require("valua.cli.contracts")
+
+describe("zero-runtime contract directives", function()
+    it("selects named returned schemas without a runtime export call", function()
+        local result = parse("---@valua-contract-namespace todo\n---@valua-contract Todo TodoSchema\n---@valua-contract CreateTodo CreateTodoSchema\n", "fixture.lua")
+        assert_equal(result.namespace, "todo")
+        assert_equal(result.exports[1].name, "CreateTodo")
+        assert_equal(result.exports[1].schema_name, "CreateTodoSchema")
+        assert_equal(result.exports[2].name, "Todo")
+    end)
+
+    it("rejects duplicate declarations", function()
+        local ok, err = pcall(parse, "---@valua-contract A ASchema\n---@valua-contract A AnotherSchema\n", "fixture.lua")
+        assert_false(ok)
+        assert_true(tostring(err):find("duplicate", 1, true) ~= nil)
+    end)
+
+    it("builds a bundle from the same source form that LuaLS understands", function()
+        local bundle = contracts.load("tests/contracts/directive_fixture.lua")
+        assert_equal(bundle.format, "moonstone.contract-bundle.v1")
+        assert_equal(bundle.namespace, "fixture")
+        assert_true(bundle.exports.User ~= nil)
+    end)
+end)

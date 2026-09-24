@@ -31,3 +31,13 @@ The core validation runtime in `src/valua/` has zero dependencies on Moonstone, 
 `---@valua-*` comments are tooling-only. `v.alias` is also safe as a
 standalone ordinary-Lua declaration: it returns its schema unchanged, performs
 no validation work, and can be removed by a Valua-aware production optimizer.
+
+---
+
+## 4. Contract Exports
+
+`v.contracts` has an intentionally conservative TypeScript emitter. It exports
+only the JSON-safe structural subset and rejects transformations, custom checks,
+Lua `nil`, non-string record keys, unresolved lazy schemas, and recursive graph
+references. The emitter must fail rather than claim that a TypeScript type can
+validate semantics it cannot represent.

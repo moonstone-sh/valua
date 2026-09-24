@@ -121,7 +121,7 @@ describe("Valua Alter-backed LuaLS initialization", function()
         end)
         assert_equal(unknown_code, 2)
         assert_equal(unknown_out, "")
-        assert_equal(unknown_err, "Usage: valua init [--config PATH] [--yes]\n")
+        assert_equal(unknown_err, "Usage: valua <init|contract> [OPTIONS]\n")
 
         local config_code, config_out, config_err = capture_run(function()
             return cli.run({ "init", "--config" })

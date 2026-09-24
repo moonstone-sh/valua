@@ -156,13 +156,85 @@ end
 
 ---
 
-## 5. Architecture & Type System
+## 5. Explicit Contract Exports
 
-Valua keeps value-producing work in Lua APIs and offers two equivalent ways to
-declare tooling metadata. `v.alias(name, schema)` is the canonical ordinary-Lua
-form because it works across editors; `---@valua-alias Name Schema` is an
-optional zero-runtime shorthand for tooling-first codebases. Standard Schema
-interoperability and deep modular exports remain runtime concerns.
+Use `v.contracts` when a schema is a serialized boundary shared with another
+runtime. The `exports` table is intentionally the complete public surface:
+Valua does not scan modules or treat every `v.alias()` as public API.
+
+```lua
+local v = require("valua")
+
+return v.contracts({
+    namespace = "todo",
+    exports = {
+        CreateTodo = v.export("CreateTodo", v.object({
+            title = v.pipe(v.string(), v.non_empty()),
+        })),
+        Todo = v.export("Todo", v.object({
+            id = v.integer(),
+            title = v.string(),
+            done = v.optional(v.boolean()),
+        })),
+    },
+})
+```
+
+`v.export(name, schema)` is the primitive: an explicitly named, serialized
+value type. Normal schemas use that one shape for both input and output;
+separate input/output is reserved for a real transforming adapter.
+
+For no runtime call at all, use namespaced comments and return the named
+schemas. The second name links the public contract name to its local schema for
+LuaLS as well as the build:
+
+```lua
+---@valua-contract-namespace todo
+---@valua-contract Todo TodoSchema
+local TodoSchema = v.object({ id = v.integer(), title = v.string() })
+
+return { Todo = TodoSchema }
+```
+
+`valua contract build` reads these directives at build time, checks that each
+public name is returned, and evaluates only the module needed to reflect its
+schemas. Valua's LuaLS plugin treats `---@valua-contract Todo TodoSchema` as a
+synthetic `---@alias Todo …`, so hovers, completions, and `safe_parse` results
+retain the contract type without a runtime call. LuaLS itself does not need to
+understand the custom tag. Comments do not affect runtime execution. A future
+Ballad/Vite transform may erase `v.export()` calls too; today it is already an
+identity function.
+
+`v.contract_typescript.render(bundle)` produces deterministic TypeScript types
+for every export in key order. It is a deliberately narrow first boundary:
+opaque checks, transforms, `nil`, non-string records, unresolved lazy schemas,
+and recursion fail instead of being silently weakened. A later contract compiler
+will add atomic file output, manifests, JSON Schema bundles, Bun adapters, and
+Meteorite/OpenAPI composition around this same explicit export shape.
+
+Put the declaration in an explicit `contracts.lua` module and invoke it from a
+Bun/Vite prebuild step:
+
+```sh
+moon exec valua -- contract build \
+  --input contracts.lua \
+  --typescript js/src/generated/contracts.d.ts \
+  --json-schema .contracts/contracts.json
+```
+
+The command evaluates only that named module, writes both artifacts atomically,
+and reports whether either generated file changed.
+
+---
+
+## 6. Architecture & Type System
+
+Valua keeps value-producing work in Lua APIs and offers two forms of tooling
+metadata. `v.alias(name, schema)` is the general ordinary-Lua form;
+`---@valua-alias Name Schema` is its zero-runtime shorthand. At a serialized
+boundary, use the more specific `---@valua-contract Name Schema`: it is also
+recognized by the contract builder. Standard Schema interoperability and deep
+modular exports remain runtime concerns.
 
 ```mermaid
 flowchart TD
@@ -191,7 +263,7 @@ flowchart TD
 
 ---
 
-## 6. Decoupled Module Architecture & Deep Imports
+## 7. Decoupled Module Architecture & Deep Imports
 
 Valua's dependency graph is architecturally decomposed: every primitive lives in its own file with minimal core dependencies and zero global side effects. You can import individual primitives directly without loading the root module table, making codebases clean and keeping future module bundling and dead-code elimination straightforward:
 
@@ -207,7 +279,7 @@ local value = parse(schema, "hello")
 
 ---
 
-## 7. Available Primitives
+## 8. Available Primitives
 
 ### Schemas
 `any`, `unknown`, `never`, `nil_`, `boolean`, `number`, `integer`, `string`, `literal`, `picklist`, `array`, `tuple`, `object`, `loose_object`, `strict_object`, `record`, `union`, `optional`, `lazy`, `custom`.
@@ -230,7 +302,7 @@ local value = parse(schema, "hello")
 
 ---
 
-## 8. Static Typing Helpers (`v.alias` & `v.assume`)
+## 9. Static Typing Helpers (`v.alias` & `v.assume`)
 
 Valua provides two explicit helpers to bridge runtime schemas with static annotations:
 
@@ -267,7 +339,7 @@ local trusted_user = v.assume(UserSchema, cache:get("user"))
 
 ---
 
-## 9. Testing & Benchmarking
+## 10. Testing & Benchmarking
 
 Run tests:
 ```bash

@@ -1,5 +1,5 @@
 local clingy = require("clingy")
-local init = require("valua.cli.init")
+local contracts = require("valua.cli.contracts")
 
 local cli = {}
 local app
@@ -9,6 +9,9 @@ local function write_help(path)
 end
 
 local function run_init(ctx)
+    -- `contract typescript` should not need Alter merely because `init` does.
+    -- Keep optional CLI integrations on their command boundary.
+    local init = require("valua.cli.init")
     local result, err = init.run({
         config = ctx.args.config,
         yes = ctx.args.yes,
@@ -23,6 +26,34 @@ local function run_init(ctx)
     end
 
     io.stdout:write(result.changed and "Configured LuaLS for Valua.\n" or "LuaLS is already configured for Valua.\n")
+end
+
+local function run_contract_typescript(ctx)
+    local ok, changed_or_err = pcall(contracts.typescript, {
+        input = ctx.args.input,
+        out = ctx.args.out,
+    })
+    if not ok then
+        io.stderr:write("valua contract typescript: " .. tostring(changed_or_err) .. "\n")
+        ctx:fail(changed_or_err, 1)
+        return
+    end
+    io.stdout:write(changed_or_err and "Generated TypeScript contract declarations.\n" or "TypeScript contract declarations are current.\n")
+end
+
+local function run_contract_build(ctx)
+    local ok, changed_or_err = pcall(contracts.build, {
+        input = ctx.args.input,
+        typescript = ctx.args.typescript,
+        json_schema = ctx.args.json_schema,
+    })
+    if not ok then
+        io.stderr:write("valua contract build: " .. tostring(changed_or_err) .. "\n")
+        ctx:fail(changed_or_err, 1)
+        return
+    end
+    local changed = changed_or_err.typescript or changed_or_err.json_schema
+    io.stdout:write(changed and "Generated contract artifacts.\n" or "Contract artifacts are current.\n")
 end
 
 app = clingy.create({
@@ -55,6 +86,38 @@ app = clingy.create({
         }, {
             description = "Configure LuaLS for Valua",
         }),
+
+        contract = clingy.node({
+            build = clingy.node({
+                clingy.separator(" ", clingy.option("input", "--input")),
+                clingy.separator(" ", clingy.option("typescript", "--typescript")),
+                clingy.separator(" ", clingy.option("json_schema", "--json-schema")),
+                clingy.run(function(ctx)
+                    if ctx.args.help then
+                        write_help("contract build")
+                        return
+                    end
+                    run_contract_build(ctx)
+                end),
+            }, {
+                description = "Generate TypeScript and JSON Schema artifacts from one contract module",
+            }),
+            typescript = clingy.node({
+                clingy.separator(" ", clingy.option("input", "--input")),
+                clingy.separator(" ", clingy.option("out", "--out")),
+                clingy.run(function(ctx)
+                    if ctx.args.help then
+                        write_help("contract typescript")
+                        return
+                    end
+                    run_contract_typescript(ctx)
+                end),
+            }, {
+                description = "Generate TypeScript declarations from one explicit contract module",
+            }),
+        }, {
+            description = "Build serialized contract artifacts",
+        }),
     })),
 })
 
@@ -78,7 +141,7 @@ function cli.run(argv)
     local parsed, parse_err = pcall(app.parse, app, argv)
     if not parsed then
         if argv[1] ~= "init" then
-            io.stderr:write("Usage: valua init [--config PATH] [--yes]\n")
+            io.stderr:write("Usage: valua <init|contract> [OPTIONS]\n")
         else
             io.stderr:write("valua init: " .. clean_parse_error(parse_err) .. "\n")
         end

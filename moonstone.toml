@@ -2,7 +2,7 @@ manifest_version = 2
 
 [package]
 name = "valua"
-version = "0.2.7"
+version = "0.3.0"
 kind = "bin"
 description = "Deterministic schema declaration, runtime validation, and static type inference for Lua"
 
@@ -35,4 +35,3 @@ role = "runtime"
 name = "moonstone/clingy"
 constraint = "^0.2.0"
 role = "runtime"
-

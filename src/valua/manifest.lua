@@ -50,5 +50,9 @@ return {
         meta = "valua.methods.annotate",
         describe = "valua.methods.describe",
         to_json_schema = "valua.methods.to_json_schema",
+        contracts = "valua.contracts",
+        export = "valua.contracts",
+        contract_typescript = "valua.contracts.typescript",
+        contract_json_schema = "valua.contracts.json_schema",
     },
 }
