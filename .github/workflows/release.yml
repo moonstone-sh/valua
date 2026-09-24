@@ -48,7 +48,7 @@ jobs:
       - name: Synchronize project
         run: moon sync
       - name: Export tagged project
-        run: moon exec ballad play partiture.lua
+        run: moon exec -- ballad play partiture.lua
       - name: Verify portable executable artifact
         run: |
           descriptor=dist/registry/valua/package.toml
