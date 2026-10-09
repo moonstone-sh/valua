@@ -23,9 +23,11 @@ return {
   -- ahead of each schema declaration site.
   path = "tooling/luals/plugin.lua",
 
-  -- Verified against luals-composer 0.1.0 (2026-09-10), 2- and 3-plugin
-  -- composition against a real headless lua-language-server 3.18.2-dev.
-  transport = "^0.1.0",
+  -- Verified against luals-composer 0.2.1 (2026-10-09): composed with
+  -- hydronium-luax (LUAX first) on a real lua-language-server 3.19. A
+  -- ^0.1.0 constraint is refused by Composer 0.2.x, so enrolling by name
+  -- failed until this changed.
+  transport = "^0.2.0",
   contract = 1,
 
   -- Insertion-only, zero-width diffs (`start = pos, finish = pos - 1`) — valua
