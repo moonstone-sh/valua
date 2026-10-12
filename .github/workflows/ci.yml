@@ -38,4 +38,4 @@ jobs:
       - name: Export release candidate with Ballad
         run: moon exec -- ballad play partiture.lua
       - name: Smoke test exported CLI
-        run: bash scripts/verify-release-cli.sh
+        run: moon exec -- bash scripts/verify-release-cli.sh
