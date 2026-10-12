@@ -49,6 +49,8 @@ jobs:
         run: moon sync
       - name: Export tagged project
         run: moon exec -- ballad play partiture.lua
+      - name: Smoke test exported CLI
+        run: bash scripts/verify-release-cli.sh
       - name: Verify portable executable artifact
         run: |
           descriptor=dist/registry/valua/package.toml

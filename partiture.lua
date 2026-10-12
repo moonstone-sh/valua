@@ -11,6 +11,7 @@ return ballad.partiture(function(p)
 		bin = "valua",
 		entry = "src/main.lua",
 		interpreter = "lua",
+		lua_paths = { "src", "lua" },
 		include = { "src/**" },
 	})
 
