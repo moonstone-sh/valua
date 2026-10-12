@@ -1,4 +1,5 @@
 local clingy = require("clingy")
+local v = require("valua")
 local contracts = require("valua.cli.contracts")
 
 local cli = {}
@@ -60,22 +61,22 @@ app = clingy.create({
     name = "valua",
     description = "Deterministic schema declaration, runtime validation, and static type inference for Lua",
 
-    clingy.root(clingy.node({
+    root = clingy.node({
         -- Help is one inherited binding, so every command reads the canonical
         -- `help` key without creating a colliding command-local binding.
-        clingy.inherit(clingy.flag("help", "-h", "--help", {
+        clingy.inherit(clingy.flag({ key = "help", aliases = { "-h", "--help" }, metadata = {
             description = "Show help information",
-        })),
+        } })),
         clingy.run(function()
             write_help()
         end),
 
         init = clingy.node({
             -- Detached values deliberately match the pre-Clingy CLI grammar.
-            clingy.separator(" ", clingy.option("config", "-c", "--config")),
-            clingy.flag("yes", "-y", "--yes", {
+            clingy.option({ key = "config", aliases = { "-c", "--config" }, value = { schema = v.string(), separators = { attached = {}, detached = true } } }),
+            clingy.flag({ key = "yes", aliases = { "-y", "--yes" }, metadata = {
                 description = "Automatically accept changes without prompting",
-            }),
+            } }),
             clingy.run(function(ctx)
                 if ctx.args.help then
                     write_help("init")
@@ -89,9 +90,9 @@ app = clingy.create({
 
         contract = clingy.node({
             build = clingy.node({
-                clingy.separator(" ", clingy.option("input", "--input")),
-                clingy.separator(" ", clingy.option("typescript", "--typescript")),
-                clingy.separator(" ", clingy.option("json_schema", "--json-schema")),
+                clingy.option({ key = "input", aliases = { "--input" }, value = { schema = v.string(), separators = { attached = {}, detached = true } } }),
+                clingy.option({ key = "typescript", aliases = { "--typescript" }, value = { schema = v.string(), separators = { attached = {}, detached = true } } }),
+                clingy.option({ key = "json_schema", aliases = { "--json-schema" }, value = { schema = v.string(), separators = { attached = {}, detached = true } } }),
                 clingy.run(function(ctx)
                     if ctx.args.help then
                         write_help("contract build")
@@ -103,8 +104,8 @@ app = clingy.create({
                 description = "Generate TypeScript and JSON Schema artifacts from one contract module",
             }),
             typescript = clingy.node({
-                clingy.separator(" ", clingy.option("input", "--input")),
-                clingy.separator(" ", clingy.option("out", "--out")),
+                clingy.option({ key = "input", aliases = { "--input" }, value = { schema = v.string(), separators = { attached = {}, detached = true } } }),
+                clingy.option({ key = "out", aliases = { "--out" }, value = { schema = v.string(), separators = { attached = {}, detached = true } } }),
                 clingy.run(function(ctx)
                     if ctx.args.help then
                         write_help("contract typescript")
@@ -118,7 +119,7 @@ app = clingy.create({
         }, {
             description = "Build serialized contract artifacts",
         }),
-    })),
+    }),
 })
 
 local function clean_parse_error(err)
