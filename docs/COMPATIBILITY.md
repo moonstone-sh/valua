@@ -30,6 +30,19 @@ prebuilt artifacts and/or a valid source fallback for every supported target
 and ABI. Do not label a native artifact ABI-agnostic merely because its Lua API
 looks portable.
 
+## Lua flavors
+
+Moonstone can ship per-flavor files for one module (`mod@lua54.lua`,
+`mod@luajit.lua`; see Moonstone's `docs/PROJECT_ENVIRONMENT.md`, "Flavors").
+Valua uses none, and that is deliberate: the runtime has no version-dependent
+code path. Integers are checked with `val % 1 == 0` plus NaN and infinity
+guards rather than `math.type`, and nothing relies on `goto`, integer
+operators, `utf8`, `table.unpack`, or `setfenv`. The only `_VERSION`/`jit`
+probe is the benchmark runner's runtime label. If a future change cannot be
+written once for every supported Lua, put it in a variant file beside an
+untagged fallback that still runs everywhere, and keep the archive
+ABI-agnostic as described above.
+
 ## Verification matrix
 
 Before releasing a runtime-facing change, run the ordinary test suite under
