@@ -1,6 +1,19 @@
 local manifest = require("valua.manifest")
 
 describe("Modularity & Architecture Invariants", function()
+    it("loading JSON Schema conversion does not leak a global helper", function()
+        local previous = _G.convert_node_body
+        local loaded = package.loaded["valua.core.json_schema"]
+        _G.convert_node_body = nil
+        package.loaded["valua.core.json_schema"] = nil
+        local ok, result = pcall(require, "valua.core.json_schema")
+        local leaked = _G.convert_node_body
+        _G.convert_node_body = previous
+        package.loaded["valua.core.json_schema"] = loaded
+        assert_true(ok, tostring(result))
+        assert_true(leaked == nil)
+    end)
+
     it("deep primitive imports work independently without root namespace loaded", function()
         -- Ensure deep primitive requires work directly
         local string_s = require("valua.schemas.string")

@@ -6,6 +6,7 @@
 local reflect_lib = require("valua.core.reflect")
 
 local json_schema = {}
+local convert_node_body
 
 --- Convert a reflected node into a JSON Schema fragment.
 ---@param node_id string
